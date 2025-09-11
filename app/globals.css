@@ -1,10 +1,52 @@
 @import "tailwindcss";
 
 @theme {
+  /* Primary Color - Blue */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #256eff;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+  --color-primary: #256eff;
+
+  /* Secondary Color - Teal */
+  --color-secondary-50: #f0fdfa;
+  --color-secondary-100: #ccfbf1;
+  --color-secondary-200: #99f6e4;
+  --color-secondary-300: #5eead4;
+  --color-secondary-400: #2dd4bf;
+  --color-secondary-500: #2a9d8f;
+  --color-secondary-600: #0d9488;
+  --color-secondary-700: #0f766e;
+  --color-secondary-800: #115e59;
+  --color-secondary-900: #134e4a;
+  --color-secondary-950: #042f2e;
+  --color-secondary: #2a9d8f;
+
+  /* Accent Color - Golden Yellow */
+  --color-accent-50: #fefce8;
+  --color-accent-100: #fef9c3;
+  --color-accent-200: #fef08a;
+  --color-accent-300: #fde74c;
+  --color-accent-400: #facc15;
+  --color-accent-500: #eab308;
+  --color-accent-600: #ca8a04;
+  --color-accent-700: #a16207;
+  --color-accent-800: #854d0e;
+  --color-accent-900: #713f12;
+  --color-accent-950: #422006;
+  --color-accent: #fde74c;
+
+  /* Your existing colors */
   --color-green1: #1ed760;
   --color-green2: #95ffe1;
   --color-green3: #0c9b7d;
-  --color-green3: #90ee90;
   --color-green4: #b3e1ca;
   --color-turquoise1: #daf4f0;
   --color-turquoise2: #70e2ff;
@@ -14,5 +56,23 @@
   --color-blue3: #143bff;
   --color-blue4: #030825;
 
-  --font-quango: "Quango", sans-serif;
+  /* Custom shadows */
+  --shadow-primary: 0 10px 25px -3px rgb(37 110 255 / 0.3);
+  --shadow-secondary: 0 10px 25px -3px rgb(42 157 143 / 0.3);
+  --shadow-accent: 0 10px 25px -3px rgb(253 231 76 / 0.3);
+
+  /* Custom gradients */
+  --gradient-brand: linear-gradient(135deg, #256eff, #2a9d8f, #fde74c);
+  --gradient-primary: linear-gradient(135deg, #60a5fa, #2563eb);
+  --gradient-secondary: linear-gradient(135deg, #2dd4bf, #0d9488);
+  --gradient-accent: linear-gradient(135deg, #fef08a, #facc15);
+
+  /* Fonts */
+  --font-quicksand: "Quicksand", sans-serif;
+  --font-family-quicksand: var(--font-quicksand);
+  --font-family-sans: var(--font-quicksand);
+}
+
+button {
+  cursor: pointer !important;
 }

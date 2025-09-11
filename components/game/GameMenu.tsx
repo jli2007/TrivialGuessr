@@ -1,6 +1,6 @@
 // components/GameMenu.tsx
 import React from 'react';
-import { Calendar, Users, Crown } from 'lucide-react';
+import { Calendar, Users, Crown, Play, UserPlus } from 'lucide-react';
 import { Player } from '../../types';
 
 interface GameMenuProps {
@@ -25,82 +25,141 @@ const GameMenu: React.FC<GameMenuProps> = ({
   dailyLeaderboard,
 }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
+    <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4 font-sans relative overflow-hidden">
+      {/* Animated Background Pattern */}
+      <div className="absolute inset-0 opacity-25 pointer-events-none">
+        <div 
+          className="absolute inset-0 animate-diagonal-scroll"
+          style={{
+            backgroundImage: 'url(/logo.png)',
+            backgroundSize: '85px 100px',
+            backgroundRepeat: 'repeat',
+            width: 'calc(100% + 85px)',
+            height: 'calc(100% + 100px)',
+          }}
+        />
+      </div>
+      
+      <div className="max-w-md w-full relative z-10">
+        {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-white mb-2">🌍 TriviaGuessr</h1>
-          <p className="text-blue-200 text-lg">Guess locations around the world</p>
-          <p className="text-blue-300 text-sm mt-2">Powered by Google Maps</p>
+          <h1 className="text-6xl font-bold text-white mb-3 drop-shadow-2xl">
+            🌍 <span className="bg-gradient-to-r from-accent-300 to-accent-400 bg-clip-text text-transparent">TriviaGuessr</span>
+          </h1>
+          <p className="text-primary-200 text-xl font-medium drop-shadow-lg">Guess locations around the world</p>
         </div>
         
-        <div className="space-y-4">
-          <button
-            onClick={onStartDaily}
-            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 px-6 rounded-xl font-semibold text-lg flex items-center justify-center gap-3 hover:from-green-600 hover:to-emerald-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
-          >
-            <Calendar className="w-6 h-6" />
-            Daily Challenge
-          </button>
-          
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 space-y-4">
-            <h3 className="text-white text-lg font-semibold flex items-center gap-2">
-              <Users className="w-5 h-5" />
+        <div className="space-y-6">
+          {/* Multiplayer Section */}
+          <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/10 hover:border-secondary-400/30 transition-all duration-300">
+            <h3 className="text-white text-xl font-bold flex items-center gap-3 mb-5">
+              <div className="p-2 bg-secondary-500/20 rounded-lg">
+                <Users className="w-6 h-6 text-secondary-300" />
+              </div>
               Multiplayer Mode
             </h3>
             
-            <input
-              type="text"
-              placeholder="Enter your name"
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:border-white/60 focus:outline-none"
-            />
-            
-            <div className="flex gap-2">
+            <div className="space-y-4">
               <input
                 type="text"
-                placeholder="Room Code"
-                value={roomCode}
-                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                className="flex-1 px-4 py-2 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:border-white/60 focus:outline-none"
+                placeholder="Enter your name"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-secondary-400/60 focus:outline-none focus:ring-2 focus:ring-secondary-400/20 transition-all duration-200 backdrop-blur-sm"
               />
+              
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  placeholder="Room Code"
+                  value={roomCode}
+                  onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-primary-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 transition-all duration-200 backdrop-blur-sm"
+                />
+                <button
+                  onClick={onJoinRoom}
+                  disabled={!playerName.trim() || !roomCode.trim()}
+                  className="px-6 py-3 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-primary hover:shadow-lg hover:scale-105 flex items-center gap-2"
+                >
+                  <Play className="w-4 h-4" />
+                  Join
+                </button>
+              </div>
+              
               <button
-                onClick={onJoinRoom}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                onClick={onCreateRoom}
+                disabled={!playerName.trim()}
+                className="w-full py-4 bg-secondary-500 hover:bg-secondary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-secondary hover:shadow-lg hover:scale-105 flex items-center justify-center gap-3"
               >
-                Join
+                <UserPlus className="w-5 h-5" />
+                Create Room
               </button>
             </div>
-            
-            <button
-              onClick={onCreateRoom}
-              className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-            >
-              Create Room
-            </button>
           </div>
-        </div>
-        
-        <div className="mt-8 bg-white/10 backdrop-blur-md rounded-xl p-4">
-          <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-            <Crown className="w-5 h-5 text-yellow-400" />
-            Daily Leaderboard
-          </h3>
-          <div className="space-y-2">
-            {dailyLeaderboard.slice(0, 3).map((player, index) => (
-              <div key={index} className="flex items-center justify-between text-sm">
-                <span className="text-white flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center text-black font-bold text-xs">
-                    {player.rank}
-                  </span>
-                  {player.name}
-                </span>
-                <span className="text-blue-200 font-medium">{player.score.toLocaleString()}</span>
+
+          {/* Daily Challenge Button */}
+          <button
+            onClick={onStartDaily}
+            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-5 px-6 rounded-2xl font-bold text-xl flex items-center justify-center gap-4 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"
+          >
+            <div className="p-2 bg-black/10 rounded-lg">
+              <Calendar className="w-7 h-7" />
+            </div>
+            Daily Challenge
+          </button>
+
+          {/* Daily Leaderboard */}
+          <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/10">
+            <h3 className="text-white font-bold text-xl mb-4 flex items-center gap-3">
+              <div className="p-2 bg-accent-300/20 rounded-lg">
+                <Crown className="w-6 h-6 text-accent-300" />
               </div>
-            ))}
+              Daily Leaderboard
+            </h3>
+            <div className="space-y-3">
+              {dailyLeaderboard.slice(0, 3).map((player, index) => (
+                <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors duration-200">
+                  <span className="text-white flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-black font-bold text-sm shadow-lg ${
+                      index === 0 ? 'bg-gradient-to-r from-accent-300 to-accent-400' :
+                      index === 1 ? 'bg-gradient-to-r from-gray-300 to-gray-400' :
+                      'bg-gradient-to-r from-amber-600 to-amber-700'
+                    }`}>
+                      {player.rank}
+                    </div>
+                    <span className="font-medium">{player.name}</span>
+                  </span>
+                  <span className="text-primary-200 font-bold text-lg">
+                    {player.score.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+              {dailyLeaderboard.length === 0 && (
+                <div className="text-center py-6 text-white/60">
+                  <p>No scores yet today!</p>
+                  <p className="text-sm mt-1">Be the first to play</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+      
+      {/* CSS Animation */}
+      <style>{`
+        @keyframes diagonal-scroll {
+          0% {
+            transform: translate(0, 0);
+          }
+          100% {
+            transform: translate(-85px, -100px);
+          }
+        }
+        
+        .animate-diagonal-scroll {
+          animation: diagonal-scroll 20s linear infinite;
+        }
+      `}</style>
     </div>
   );
 };
