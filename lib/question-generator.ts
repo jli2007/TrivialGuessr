@@ -34,7 +34,7 @@ export class QuestionGenerator {
         if (questions.length > 0) {
           const { data, error } = await supabaseClient
             .from("questions")
-            .insert(questions)
+            .insert(questions as any)
             .select();
 
           if (error) throw error;
@@ -81,11 +81,12 @@ export class QuestionGenerator {
 - "Which forest location was the site of the Christmas Truce soccer game during WWI?"
 - "Where did the Enola Gay take off to drop the atomic bomb, from a runway now used for civilian flights?"
 - "Which tiny island served as Napoleon's final prison, where he died eating wallpaper with arsenic?"
-- "Where is the underwater hotel room where you sleep surrounded by sharks?"
+- "Where is the world-renowned underwater hotel room where you sleep surrounded by sharks?"
 - "Which lighthouse was the last thing Titanic passengers saw before hitting the iceberg?"
 - "Where did a single tree deflect a cannonball and save an entire village in 1645?"
 - "Which specific forest grove is considered the most haunted place on Earth by paranormal investigators?"
 - "Where is the restaurant built inside a 737 airplane that never flew?"
+- "What field did Lionel Messi first play football?"
 
 🎯 CATEGORY INSPIRATION FOR ${request.category}:
 - Ancient mysteries and lost civilizations
@@ -100,12 +101,12 @@ export class QuestionGenerator {
 - Secret locations revealed decades later
 
 🗺️ GLOBAL DISTRIBUTION (logical population-based split):
-- Asia (40%): China, India, Japan, South Korea, Indonesia, Thailand, Philippines, Vietnam, etc.
-- Europe (25%): UK, Germany, France, Italy, Spain, Russia, Netherlands, Switzerland, etc.
-- North America (15%): USA, Canada, Mexico
-- Africa (10%): Nigeria, Egypt, South Africa, Kenya, Morocco, Ethiopia, etc.
-- South America (6%): Brazil, Argentina, Peru, Colombia, Chile, etc.
-- Oceania (4%): Australia, New Zealand, Pacific Islands
+- Asia (30-40%): China, India, Japan, South Korea, Indonesia, Thailand, Philippines, Vietnam, etc.
+- Europe (25-30%): UK, Germany, France, Italy, Spain, Russia, Netherlands, Switzerland, etc.
+- North America (15-20%): USA, Canada, Mexico
+- Africa (10-20%): Nigeria, Egypt, South Africa, Kenya, Morocco, Ethiopia, etc.
+- South America (6-15%): Brazil, Argentina, Peru, Colombia, Chile, etc.
+- Oceania (4-8%): Australia, New Zealand, Pacific Islands
 
 Include questions from ALL continents, with major countries getting more representation but don't forget smaller fascinating places like:
 - Bhutan's unique carbon-negative policies
@@ -115,14 +116,20 @@ Include questions from ALL continents, with major countries getting more represe
 - Monaco's gambling history
 - Tuvalu's climate change struggles
 
-🎲 DIFFICULTY SCALE (1-10):
-1-2: Famous landmarks everyone knows (Eiffel Tower, Great Wall)
-3-4: Well-known cities and major historical events (Berlin Wall, Pearl Harbor)
-5-6: Moderately known places requiring some education (Machu Picchu, Petra)
-7-8: Obscure but interesting locations (specific battle sites, unique natural formations)
-9-10: Extremely specific or recently discovered places (research stations, archaeological sites)
+🎲 DIFFICULTY SCALE - ASSIGN APPROPRIATE DIFFICULTY (1-10) FOR EACH QUESTION:
+1-2: Famous landmarks everyone knows (Eiffel Tower, Great Wall, Statue of Liberty)
+3-4: Well-known cities and major historical events (Berlin Wall, Pearl Harbor, Rome Colosseum)
+5-6: Moderately known places requiring some education (Machu Picchu, Petra, Angkor Wat)
+7-8: Obscure but interesting locations (specific battle sites, unique natural formations, lesser-known historical sites)
+9-10: Extremely specific or recently discovered places (research stations, archaeological sites, very niche locations)
 
-TARGET DIFFICULTY: ${request.difficulty}/10
+🧠 LLM DIFFICULTY ASSIGNMENT INSTRUCTIONS:
+- Analyze each question's obscurity level
+- Consider how many people would reasonably know this location
+- Factor in historical significance vs. general awareness
+- Famous tourist destinations = lower difficulty
+- Specific historical events/scientific locations = higher difficulty
+- Recent discoveries or very niche places = highest difficulty
 
 ⚡ REQUIREMENTS:
 - Any pinpointable location with exact coordinates (lat/lng)
@@ -132,6 +139,7 @@ TARGET DIFFICULTY: ${request.difficulty}/10
 - Include dramatic human stories when possible
 - Vary between cities, natural locations, and unique spots
 - Ensure coordinates are precise and accurate
+- **ASSIGN REALISTIC DIFFICULTY 1-10 BASED ON QUESTION OBSCURITY**
 
 OUTPUT ONLY VALID JSON:
 [
@@ -149,7 +157,7 @@ OUTPUT ONLY VALID JSON:
   }
 ]
 
-Generate exactly ${request.count} unique, globally diverse questions with difficulty ${request.difficulty}/10:`;
+Generate exactly ${request.count} unique, globally diverse questions with LLM-assigned difficulty levels:`;
   }
 
   private parseResponse(
@@ -157,9 +165,38 @@ Generate exactly ${request.count} unique, globally diverse questions with diffic
   ): Omit<Question, "id" | "created_at">[] {
     try {
       let cleaned = response.trim();
+
+      // Remove markdown
       cleaned = cleaned.replace(/```json\n?|\n?```/g, "");
-      cleaned = cleaned.replace(/^[^[]*/, ""); // Remove everything before first [
-      cleaned = cleaned.replace(/[^}]*$/, "}]"); // Clean everything after last }
+
+      // Find JSON array
+      const start = cleaned.indexOf("[");
+      const end = cleaned.lastIndexOf("]");
+
+      if (start === -1) {
+        throw new Error("No JSON array found");
+      }
+
+      // If no closing ], try to reconstruct it
+      if (end === -1 || end < start) {
+        // Find the last complete object
+        const lastBrace = cleaned.lastIndexOf("}");
+        if (lastBrace > start) {
+          cleaned = cleaned.substring(start, lastBrace + 1) + "\n]";
+        } else {
+          throw new Error("No complete JSON objects found");
+        }
+      } else {
+        cleaned = cleaned.substring(start, end + 1);
+      }
+
+      // Try to fix trailing commas and incomplete objects
+      cleaned = cleaned
+        .replace(/,\s*\.\.\./g, "") // Remove trailing ...
+        .replace(/,(\s*[}\]])/, "$1") // Remove trailing commas
+        .replace(/([^"]),\s*$/, "$1"); // Remove final trailing comma
+
+      console.log("Cleaned JSON:", cleaned.substring(0, 200) + "...");
 
       const questions = JSON.parse(cleaned);
 
@@ -174,20 +211,23 @@ Generate exactly ${request.count} unique, globally diverse questions with diffic
           q.answer_lat <= 90 &&
           q.answer_lng >= -180 &&
           q.answer_lng <= 180 &&
-          q.question.length > 20;
+          q.difficulty >= 1 &&
+          q.difficulty <= 10;
 
         if (!isValid) {
-          console.warn(
-            "Filtered out invalid question:",
-            q.question || "No question"
-          );
+          console.warn("Filtered invalid question:", q);
         }
 
         return isValid;
       });
-    } catch (error) {
-      console.error("Failed to parse LLM response:", error);
-      console.error("Raw response:", response.substring(0, 500) + "...");
+    } catch (error: any) {
+      console.error("Parse error:", error.message);
+      console.error("Raw response length:", response.length);
+      console.error("First 500 chars:", response.substring(0, 500));
+      console.error(
+        "Last 200 chars:",
+        response.substring(response.length - 200)
+      );
       throw new Error("Invalid response format from LLM");
     }
   }
