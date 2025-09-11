@@ -3,7 +3,7 @@
 "use client"
 
 import React, { useEffect, useRef } from 'react';
-import { MapPin, Target } from 'lucide-react';
+import { MapPin, Target, Navigation } from 'lucide-react';
 import { GoogleMapProps, Location } from '../types';
 import { haversineDistance, formatDistance } from '../utils/gameUtils';
 
@@ -39,7 +39,15 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
       },
       mapTypeControl: true,
       streetViewControl: false,
-      fullscreenControl: false
+      fullscreenControl: false,
+      mapTypeId: google.maps.MapTypeId.HYBRID,
+      styles: [
+        {
+          featureType: "poi",
+          elementType: "labels",
+          stylers: [{ visibility: "off" }]
+        }
+      ]
     };
 
     const map = new google.maps.Map(mapRef.current, mapOptions);
@@ -77,9 +85,9 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
         title: 'Your Guess',
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 10,
+          scale: 12,
           fillColor: '#ef4444',
-          fillOpacity: 1,
+          fillOpacity: 0.9,
           strokeColor: '#ffffff',
           strokeWeight: 3
         }
@@ -88,7 +96,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
       const userMarker = new google.maps.Marker(userMarkerOptions);
 
       const userInfoWindow = new google.maps.InfoWindow({
-        content: '<div style="color: black; font-weight: bold;">Your Guess</div>'
+        content: '<div style="color: black; font-weight: bold; padding: 4px;">🔴 Your Guess</div>'
       });
       
       userMarker.addListener('click', () => {
@@ -98,7 +106,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
       markersRef.current.push(userMarker);
     }
 
-    // Add correct location marker and polyline
+    // Add correct location marker and polyline when showing answer
     if (showAnswer && correctLocation) {
       const correctMarkerOptions: google.maps.MarkerOptions = {
         position: { lat: correctLocation.lat, lng: correctLocation.lng },
@@ -106,9 +114,9 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
         title: 'Correct Location',
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 10,
+          scale: 12,
           fillColor: '#22c55e',
-          fillOpacity: 1,
+          fillOpacity: 0.9,
           strokeColor: '#ffffff',
           strokeWeight: 3
         }
@@ -117,7 +125,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
       const correctMarker = new google.maps.Marker(correctMarkerOptions);
 
       const correctInfoWindow = new google.maps.InfoWindow({
-        content: '<div style="color: black; font-weight: bold;">Correct Location</div>'
+        content: '<div style="color: black; font-weight: bold; padding: 4px;">🎯 Correct Location</div>'
       });
       
       correctMarker.addListener('click', () => {
@@ -126,17 +134,30 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
 
       markersRef.current.push(correctMarker);
 
-      // Draw polyline between guess and correct answer
+      // Draw polyline between guess and correct answer if user made a guess
       if (selectedLocation) {
+        const distance = haversineDistance(
+          selectedLocation.lat,
+          selectedLocation.lng,
+          correctLocation.lat,
+          correctLocation.lng
+        );
+
+        // Color polyline based on accuracy
+        let strokeColor = '#ef4444'; // Red by default
+        if (distance <= 100) strokeColor = '#22c55e'; // Green
+        else if (distance <= 500) strokeColor = '#eab308'; // Yellow
+        else if (distance <= 1000) strokeColor = '#f97316'; // Orange
+
         const polylineOptions: google.maps.PolylineOptions = {
           path: [
             { lat: selectedLocation.lat, lng: selectedLocation.lng },
             { lat: correctLocation.lat, lng: correctLocation.lng }
           ],
           geodesic: true,
-          strokeColor: '#ffffff',
+          strokeColor: strokeColor,
           strokeOpacity: 0.8,
-          strokeWeight: 3
+          strokeWeight: 4
         };
 
         const polyline = new google.maps.Polyline(polylineOptions);
@@ -149,16 +170,26 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
         bounds.extend({ lat: correctLocation.lat, lng: correctLocation.lng });
         map.fitBounds(bounds);
         
-        // Add some padding
+        // Add some padding and limit max zoom
         setTimeout(() => {
           const currentZoom = map.getZoom();
-          if (currentZoom && currentZoom > 10) {
-            map.setZoom(Math.min(currentZoom, 10));
+          if (currentZoom && currentZoom > 12) {
+            map.setZoom(Math.min(currentZoom, 12));
           }
         }, 100);
+      } else {
+        // If no guess was made, center on correct location
+        map.setCenter({ lat: correctLocation.lat, lng: correctLocation.lng });
+        map.setZoom(8);
       }
     }
   }, [selectedLocation, correctLocation, showAnswer]);
+
+  const formatDistanceDisplay = (distance: number): string => {
+    if (distance < 1) return `${Math.round(distance * 1000)}m`;
+    if (distance < 10) return `${distance.toFixed(1)}km`;
+    return `${Math.round(distance)}km`;
+  };
 
   return (
     <div className={`relative bg-blue-900 rounded-lg overflow-hidden border-2 border-white/20 ${isFullscreen ? 'h-full' : 'h-96'}`}>
@@ -172,18 +203,47 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
       )}
       
       {selectedLocation && !showAnswer && (
-        <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-2 rounded-lg flex items-center gap-2">
+        <div className="absolute top-4 right-4 bg-red-500/90 text-white px-3 py-2 rounded-lg flex items-center gap-2 backdrop-blur-sm">
           <Target className="w-4 h-4" />
           Guess placed!
         </div>
       )}
 
       {showAnswer && selectedLocation && correctLocation && (
-        <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-2 rounded-lg text-sm backdrop-blur-sm">
-          Distance: {formatDistance(haversineDistance(
-            selectedLocation.lat, selectedLocation.lng,
-            correctLocation.lat, correctLocation.lng
-          ))}
+        <div className="absolute bottom-4 left-4 bg-black/85 text-white px-4 py-3 rounded-lg text-sm backdrop-blur-sm border border-white/20">
+          <div className="flex items-center gap-2 mb-1">
+            <Navigation className="w-4 h-4 text-blue-400" />
+            <span className="font-medium">Distance:</span>
+          </div>
+          <div className="text-lg font-bold">
+            {formatDistanceDisplay(haversineDistance(
+              selectedLocation.lat, selectedLocation.lng,
+              correctLocation.lat, correctLocation.lng
+            ))}
+          </div>
+        </div>
+      )}
+
+      {showAnswer && !selectedLocation && correctLocation && (
+        <div className="absolute bottom-4 left-4 bg-black/85 text-white px-4 py-3 rounded-lg text-sm backdrop-blur-sm border border-white/20">
+          <div className="flex items-center gap-2">
+            <Target className="w-4 h-4 text-red-400" />
+            <span className="font-medium text-red-400">No guess made</span>
+          </div>
+        </div>
+      )}
+
+      {showAnswer && (
+        <div className="absolute top-4 right-4 bg-green-600/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-sm">
+          <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+          <span className="font-medium">Correct Location</span>
+        </div>
+      )}
+
+      {showAnswer && selectedLocation && (
+        <div className="absolute top-16 right-4 bg-red-600/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-sm">
+          <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+          <span className="font-medium">Your Guess</span>
         </div>
       )}
     </div>

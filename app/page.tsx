@@ -2,16 +2,16 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { GameMode, Location, GameAnswer, Player } from '@typesFolder/index';
+import { Question } from '@typesFolder/question';
 import { mockQuestions, dailyLeaderboard } from '@data/mockData';
-import { haversineDistance, calculateScore, generateRoomCode, loadGoogleMapsScript } from '@utils/gameUtils';
+import { loadGoogleMapsScript } from '@utils/gameUtils';
 import GameMenu from '@components/game/GameMenu';
 import GameLobby from '@components/game/GameLobby';
 import GameQuestion from '@components/game/GameQuestion';
-import RoundResult from '@components/RoundResult';
 import GameResult from '@components/game/GameResult';
 import LoadingScreen from '@components/LoadingScreen';
 
-const GOOGLE_MAPS_API_KEY = '';
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
 const TriviaGuessr: React.FC = () => {
   // Game state
@@ -19,9 +19,6 @@ const TriviaGuessr: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
   const [score, setScore] = useState<number>(0);
   const [answers, setAnswers] = useState<GameAnswer[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
-  const [showResult, setShowResult] = useState<boolean>(false);
-  const [timeLeft, setTimeLeft] = useState<number>(60);
   const [gameComplete, setGameComplete] = useState<boolean>(false);
   
   // Multiplayer state
@@ -31,11 +28,8 @@ const TriviaGuessr: React.FC = () => {
   const [roomPlayers, setRoomPlayers] = useState<Player[]>([]);
   
   // UI state
-  const [isMapFullscreen, setIsMapFullscreen] = useState<boolean>(false);
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState<boolean>(false);
   const [apiKeyMissing, setApiKeyMissing] = useState<boolean>(false);
-  
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load Google Maps API
   useEffect(() => {
@@ -48,40 +42,12 @@ const TriviaGuessr: React.FC = () => {
     }
   }, []);
 
-  // Timer effect
-  useEffect(() => {
-    if ((gameMode === 'daily' || gameMode === 'multiplayer') && !showResult && !gameComplete && timeLeft > 0) {
-      timerRef.current = setTimeout(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            handleAnswer();
-            return 60;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    }
-    
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, [gameMode, showResult, gameComplete, timeLeft]);
-
   const startDailyMode = (): void => {
     setGameMode('daily');
     setCurrentQuestion(0);
     setScore(0);
     setAnswers([]);
     setGameComplete(false);
-    setTimeLeft(60);
-    setSelectedLocation(null);
-    setShowResult(false);
   };
 
   const createRoom = (): void => {
@@ -110,57 +76,24 @@ const TriviaGuessr: React.FC = () => {
     setScore(0);
     setAnswers([]);
     setGameComplete(false);
-    setTimeLeft(60);
-    setSelectedLocation(null);
-    setShowResult(false);
   };
 
-  const handleLocationSelect = (location: Location): void => {
-    setSelectedLocation(location);
+  // Helper function to generate room code (moved from utils)
+  const generateRoomCode = (): string => {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
   };
 
-  const handleAnswer = (): void => {
-    const question = mockQuestions[currentQuestion];
-    let distance: number | null = null;
-    let questionScore = 0;
-    
-    if (selectedLocation) {
-      distance = haversineDistance(
-        selectedLocation.lat,
-        selectedLocation.lng,
-        question.correct_coordinates.lat,
-        question.correct_coordinates.lng
-      );
-      questionScore = calculateScore(distance);
-    }
-    
-    const newAnswer: GameAnswer = {
-      question: question.prompt,
-      userGuess: selectedLocation,
-      correctLocation: question.correct_coordinates,
-      correctAnswer: question.correct_answer,
-      distance,
-      score: questionScore
-    };
+  const handleAnswerSubmitted = (answer: GameAnswer): void => {
+    setAnswers(prev => [...prev, answer]);
+    setScore(prev => prev + answer.score);
+  };
 
-    setAnswers(prev => [...prev, newAnswer]);
-    setScore(prev => prev + questionScore);
-    setShowResult(true);
-    
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
+  const handleNextRound = (): void => {
+    if (currentQuestion < mockQuestions.length - 1) {
+      setCurrentQuestion(prev => prev + 1);
+    } else {
+      setGameComplete(true);
     }
-
-    setTimeout(() => {
-      setShowResult(false);
-      setSelectedLocation(null);
-      if (currentQuestion < mockQuestions.length - 1) {
-        setCurrentQuestion(prev => prev + 1);
-        setTimeLeft(60);
-      } else {
-        setGameComplete(true);
-      }
-    }, 6000);
   };
 
   const resetGame = (): void => {
@@ -168,19 +101,11 @@ const TriviaGuessr: React.FC = () => {
     setCurrentQuestion(0);
     setScore(0);
     setAnswers([]);
-    setSelectedLocation(null);
-    setShowResult(false);
     setGameComplete(false);
-    setTimeLeft(60);
     setRoomCode('');
     setPlayerName('');
     setIsHost(false);
     setRoomPlayers([]);
-    setIsMapFullscreen(false);
-  };
-
-  const toggleFullscreen = (): void => {
-    setIsMapFullscreen(prev => !prev);
   };
 
   // Render loading screen if Google Maps is not loaded
@@ -229,16 +154,6 @@ const TriviaGuessr: React.FC = () => {
     );
   }
 
-  // Render round result screen
-  if (showResult && answers.length > 0) {
-    return (
-      <RoundResult
-        lastAnswer={answers[answers.length - 1]}
-        score={score}
-      />
-    );
-  }
-
   // Render based on current game mode
   switch (gameMode) {
     case 'menu':
@@ -275,12 +190,8 @@ const TriviaGuessr: React.FC = () => {
             currentQuestion={currentQuestion}
             totalQuestions={mockQuestions.length}
             score={score}
-            timeLeft={timeLeft}
-            selectedLocation={selectedLocation}
-            isMapFullscreen={isMapFullscreen}
-            onLocationSelect={handleLocationSelect}
-            onSubmitGuess={handleAnswer}
-            onToggleFullscreen={toggleFullscreen}
+            onAnswerSubmitted={handleAnswerSubmitted}
+            onNextRound={handleNextRound}
           />
         </div>
       );
