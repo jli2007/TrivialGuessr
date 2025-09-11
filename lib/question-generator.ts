@@ -61,7 +61,7 @@ export class QuestionGenerator {
   }
 
   private buildEnhancedPrompt(request: QuestionRequest): string {
-    return `Generate exactly ${request.count} fascinating trivia questions for a geographic guessing game.
+    return `Generate exactly ${request.count} fascinating trivia questions for a geographic guessing game that relate to ${request.category},
 
 🌍 THE POSSIBILITIES ARE ENDLESS! Think beyond cities, although cities are valid and promoted, need a good variety:
 - Remote locations (Nemo Point, most isolated spot on Earth)
@@ -88,7 +88,7 @@ export class QuestionGenerator {
 - "Where is the restaurant built inside a 737 airplane that never flew?"
 - "What field did Lionel Messi first play football?"
 
-🎯 CATEGORY INSPIRATION FOR ${request.category}:
+🎯 EXAMPLE NICHE QUESTIONS (HAVE LESS OF THIS):
 - Ancient mysteries and lost civilizations
 - Bizarre accidents and freak incidents  
 - Scientific discoveries made by accident

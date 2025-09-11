@@ -1,24 +1,23 @@
 import { QuestionGenerator } from "@/lib/question-generator";
 
 async function populateQuestions() {
-  console.log("GENERATING")
   const generator = new QuestionGenerator();
   
   // Way more specific and interesting categories
   const questionTypes = [
     // Historical & People
     { category: 'birth_places', description: 'Where famous people were born', count: 1 },
-    { category: 'death_places', description: 'Where notable figures died', count: 0 },
-    { category: 'first_performances', description: 'Where artists first performed/exhibited', count: 0},
-    { category: 'education_origins', description: 'Where famous people studied', count: 0},
+    { category: 'death_places', description: 'Where notable figures died', count: 1 },
+    { category: 'first_performances', description: 'Where artists first performed/exhibited', count: 1},
+    { category: 'education_origins', description: 'Where famous people studied', count: 1},
     
     // Inventions & Discoveries
-    { category: 'invention_origins', description: 'Where things were invented/discovered', count: 0 },
-    { category: 'first_factories', description: 'Where first manufacturing happened', count: 0},
-    { category: 'patent_locations', description: 'Where patents were filed', count: 0},
+    { category: 'invention_origins', description: 'Where things were invented/discovered', count: 1 },
+    { category: 'first_factories', description: 'Where first manufacturing happened', count: 1},
+    { category: 'patent_locations', description: 'Where patents were filed', count: 1},
     
     // Sports & Entertainment
-    { category: 'sports_origins', description: 'Where sports/games originated', count: 0 },
+    { category: 'sports_origins', description: 'Where sports/games originated', count: 1 },
     { category: 'first_stadiums', description: 'Historic sports venues', count: 0},
     { category: 'music_venues', description: 'Legendary concert halls/venues', count: 0},
     { category: 'film_locations', description: 'Where movies were filmed', count: 0},
