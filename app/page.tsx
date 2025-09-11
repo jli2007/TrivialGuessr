@@ -11,7 +11,7 @@ import RoundResult from '@components/RoundResult';
 import GameResult from '@components/game/GameResult';
 import LoadingScreen from '@components/LoadingScreen';
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyBqVoP3hJYXwZjQrllmn4IwvG0SZ4z6OKQ';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyCNwD45N6q_OTQhA7I6wZTEg-UQYsM8RHo';
 
 const TriviaGuessr: React.FC = () => {
   // Game state

@@ -54,5 +54,6 @@ export const dailyLeaderboard: Player[] = [
   { name: "WorldExplorer", score: 21890, rank: 2 },
   { name: "MapQueen", score: 19654, rank: 3 },
   { name: "GlobeWalker", score: 18201, rank: 4 },
-  { name: "PinDropper", score: 16987, rank: 5 }
+  { name: "PinDropper", score: 16987, rank: 5 },
+  { name: "AHAHH", score: 12, rank: 6 }
 ];

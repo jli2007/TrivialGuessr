@@ -97,15 +97,6 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
           <p className="text-blue-200 text-xs mt-2 text-center">Click on the map to place your guess</p>
         )}
       </div>
-
-      {/* Toggle Fullscreen Button - Top Right */}
-      <button
-        onClick={onToggleFullscreen}
-        className="absolute top-4 right-4 z-10 bg-black/80 hover:bg-black/90 text-white p-3 rounded-lg transition-colors shadow-lg"
-        title="Toggle fullscreen map"
-      >
-        {isMapFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-      </button>
     </div>
   );
 };
