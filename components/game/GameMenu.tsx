@@ -1,7 +1,7 @@
 // components/GameMenu.tsx
-import React, { useState } from 'react';
-import { Calendar, Users, Crown, Play, UserPlus, Infinity } from 'lucide-react';
-import { Player } from '../../types';
+import React, { useState } from "react";
+import { Calendar, Users, Crown, Play, UserPlus, Infinity } from "lucide-react";
+import { Player } from "../../types";
 import { TypingAnimation } from "@/components/magicui/typing-animation";
 import { AnimatedGradientText } from "@/components/magicui/animated-gradient-text";
 
@@ -31,78 +31,82 @@ const GameMenu: React.FC<GameMenuProps> = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4 font-sans relative overflow-x-hidden overflow-y-auto md:overflow-hidden">
-      {/* Animated Background Pattern */}
       <div className="absolute inset-0 opacity-25 pointer-events-none overflow-hidden">
-        <div 
+        <div
           className="absolute inset-0 animate-diagonal-scroll"
           style={{
-            backgroundImage: 'url(/logo.png)',
-            backgroundSize: '85px 100px',
-            backgroundRepeat: 'repeat',
-            width: 'calc(100% + 85px)',
-            height: 'calc(100% + 100px)',
+            backgroundImage: "url(/logo.png)",
+            backgroundSize: "85px 100px",
+            backgroundRepeat: "repeat",
+            width: "calc(100% + 85px)",
+            height: "calc(100% + 100px)",
           }}
         />
       </div>
-      
-      <div className="max-w-md w-full relative z-10">
-        
-        {/* Header */}
+
+      <div className="max-w-3xl w-full relative z-10 px-10">
         <div className="text-center mb-6">
           <div className="text-7xl font-bold text-white mb-2 drop-shadow-2xl">
-            🌍<TypingAnimation 
+            🌍
+            <TypingAnimation
               className="text-7xl bg-gradient-to-r from-accent-300 to-accent-400 bg-clip-text text-transparent inline"
               startOnView={true}
               delay={250}
             >
-              Trivial
+              TrivialGuessr
             </TypingAnimation>
           </div>
           <p className="text-primary-200 text-2xl font-medium drop-shadow-lg">
-            <AnimatedGradientText colorFrom="#ffff55ff"
-      colorTo="#f4fdffff">
-        Guess locations around the world
-      </AnimatedGradientText>
+            <AnimatedGradientText colorFrom="#ffff55ff" colorTo="#f4fdffff">
+              Knowledge of little value or importance.
+            </AnimatedGradientText>
           </p>
-        </div>                  
-          <div className="space-y-4">
-            {/* Daily Leaderboard */}
-            <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-white/10">
-              <h3 className="text-white font-bold text-lg mb-3 flex items-center gap-2">
-                <div className="p-1.5 bg-accent-300/20 rounded-lg">
-                  <Crown className="w-5 h-5 text-accent-300" />
-                </div>
-                <AnimatedGradientText colorFrom="#ffff55ff" colorTo="#f4fdffff">
-                  Daily Leaderboard
-                </AnimatedGradientText>
-              </h3>
-              <div className="space-y-2 max-h-50 overflow-y-auto gaming-scrollbar">
-                {dailyLeaderboard.slice(0, 50).map((player, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors duration-200">
-                    <span className="text-white flex items-center gap-2">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-black font-bold text-xs shadow-lg ${
-                        index === 0 ? 'bg-gradient-to-r from-accent-300 to-accent-400' :
-                        index === 1 ? 'bg-gradient-to-r from-gray-300 to-gray-400' :
-                        index === 2 ? 'bg-gradient-to-r from-amber-600 to-amber-700' :
-                        'bg-gradient-to-r from-gray-100 to-gray-200'
-                      }`}>
-                        {player.rank}
-                      </div>
-                      <span className="font-medium text-sm">{player.name}</span>
-                    </span>
-                    <span className="text-primary-200 font-bold text-sm">
-                      {player.score.toLocaleString()}
-                    </span>
-                  </div>
-                ))}
-                {dailyLeaderboard.length === 0 && (
-                  <div className="text-center py-3 text-white/60">
-                    <p className="text-sm">No scores yet today!</p>
-                    <p className="text-xs mt-1">Be the first to play</p>
-                  </div>
-                )}
+        </div>
+        <div className="space-y-4">
+          <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-white/10">
+            <h3 className="text-white font-bold text-lg mb-3 flex items-center gap-2">
+              <div className="p-1.5 bg-accent-300/20 rounded-lg">
+                <Crown className="w-5 h-5 text-accent-300" />
               </div>
+              <AnimatedGradientText colorFrom="#ffff55ff" colorTo="#f4fdffff">
+                Daily Leaderboard
+              </AnimatedGradientText>
+            </h3>
+            <div className="space-y-2 max-h-50 overflow-y-auto gaming-scrollbar">
+              {dailyLeaderboard.slice(0, 50).map((player, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors duration-200"
+                >
+                  <span className="text-white flex items-center gap-2">
+                    <div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-black font-bold text-xs shadow-lg ${
+                        index === 0
+                          ? "bg-gradient-to-r from-accent-300 to-accent-400"
+                          : index === 1
+                          ? "bg-gradient-to-r from-gray-300 to-gray-400"
+                          : index === 2
+                          ? "bg-gradient-to-r from-amber-600 to-amber-700"
+                          : "bg-gradient-to-r from-gray-100 to-gray-200"
+                      }`}
+                    >
+                      {player.rank}
+                    </div>
+                    <span className="font-medium text-sm">{player.name}</span>
+                  </span>
+                  <span className="text-primary-200 font-bold text-sm">
+                    {player.score.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+              {dailyLeaderboard.length === 0 && (
+                <div className="text-center py-3 text-white/60">
+                  <p className="text-sm">No scores yet today!</p>
+                  <p className="text-xs mt-1">Be the first to play</p>
+                </div>
+              )}
             </div>
+          </div>
 
           {/* Daily Challenge Button */}
           <button
@@ -123,10 +127,10 @@ const GameMenu: React.FC<GameMenuProps> = ({
                 Daily Challenge
               </TypingAnimation>
             ) : (
-              'Daily Challenge'
+              "Daily Challenge"
             )}
           </button>
-          
+
           {/* Infinite Button */}
           <button
             onMouseEnter={() => setIsInfiniteHovered(true)}
@@ -142,13 +146,13 @@ const GameMenu: React.FC<GameMenuProps> = ({
                 startOnView={true}
                 delay={50}
               >
-                Infinite Challenge
+                Casual Mode
               </TypingAnimation>
             ) : (
-              'Infinite Challenge'
+              "Casual Mode"
             )}
           </button>
-          
+
           {/* Multiplayer Section */}
           <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-white/10 hover:border-secondary-400/30 transition-all duration-300">
             <h3 className="text-white text-lg font-bold flex items-center gap-2 mb-4">
@@ -157,7 +161,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
               </div>
               Multiplayer Mode
             </h3>
-            
+
             <div className="space-y-3">
               <input
                 type="text"
@@ -166,7 +170,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
                 onChange={(e) => setPlayerName(e.target.value)}
                 className="w-full px-3 py-2.5 text-sm rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-secondary-400/60 focus:outline-none focus:ring-2 focus:ring-secondary-400/20 transition-all duration-200 backdrop-blur-sm"
               />
-              
+
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -184,7 +188,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
                   Join
                 </button>
               </div>
-              
+
               <button
                 onClick={onCreateRoom}
                 disabled={!playerName.trim()}
@@ -197,7 +201,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
           </div>
         </div>
       </div>
-      
+
       {/* CSS Animation */}
       <style>{`
         @keyframes diagonal-scroll {

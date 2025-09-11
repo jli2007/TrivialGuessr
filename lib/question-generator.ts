@@ -101,11 +101,11 @@ export class QuestionGenerator {
 - Secret locations revealed decades later
 
 🗺️ GLOBAL DISTRIBUTION (logical population-based split):
-- Asia (30-40%): China, India, Japan, South Korea, Indonesia, Thailand, Philippines, Vietnam, etc.
+- Asia (27-40%): China, India, Japan, South Korea, Indonesia, Thailand, Philippines, Vietnam, etc.
 - Europe (25-30%): UK, Germany, France, Italy, Spain, Russia, Netherlands, Switzerland, etc.
 - North America (15-20%): USA, Canada, Mexico
-- Africa (10-20%): Nigeria, Egypt, South Africa, Kenya, Morocco, Ethiopia, etc.
-- South America (6-15%): Brazil, Argentina, Peru, Colombia, Chile, etc.
+- Africa (10-21%): Nigeria, Egypt, South Africa, Kenya, Morocco, Ethiopia, etc.
+- South America (6-16%): Brazil, Argentina, Peru, Colombia, Chile, etc.
 - Oceania (4-8%): Australia, New Zealand, Pacific Islands
 
 Include questions from ALL continents, with major countries getting more representation but don't forget smaller fascinating places like:
@@ -120,7 +120,7 @@ Include questions from ALL continents, with major countries getting more represe
 1-2: Famous landmarks everyone knows (Eiffel Tower, Great Wall, Statue of Liberty)
 3-4: Well-known cities and major historical events (Berlin Wall, Pearl Harbor, Rome Colosseum)
 5-6: Moderately known places requiring some education (Machu Picchu, Petra, Angkor Wat)
-7-8: Obscure but interesting locations (specific battle sites, unique natural formations, lesser-known historical sites)
+7-8: Obscure but interesting locations (specific battle sites, unique natural formations, lesser-known historical sites, niche locations)
 9-10: Extremely specific or recently discovered places (research stations, archaeological sites, very niche locations)
 
 🧠 LLM DIFFICULTY ASSIGNMENT INSTRUCTIONS:
@@ -134,12 +134,15 @@ Include questions from ALL continents, with major countries getting more represe
 ⚡ REQUIREMENTS:
 - Any pinpointable location with exact coordinates (lat/lng)
 - Rich storytelling with specific details, dates, numbers
+- **DO NOT MENTION THE CITY/REGION IN THE QUESTION ITSELF, CONTINENT AT MOST. THIS GIVES THE ANSWER AWAY**
+- ie do not have "Where in Kenya is ..."
 - Educational and memorable
 - Global representation based on logical population splits
 - Include dramatic human stories when possible
 - Vary between cities, natural locations, and unique spots
 - Ensure coordinates are precise and accurate
 - **ASSIGN REALISTIC DIFFICULTY 1-10 BASED ON QUESTION OBSCURITY**
+- For fun fact, make it sort of like a "hint" to the location without giving the location, and to not add exclamation marks when not necessary.
 
 OUTPUT ONLY VALID JSON:
 [
