@@ -1,6 +1,6 @@
 // components/GameMenu.tsx
 import React from 'react';
-import { Calendar, Users, Crown, Play, UserPlus } from 'lucide-react';
+import { Calendar, Users, Crown, Play, UserPlus, Infinity } from 'lucide-react';
 import { Player } from '../../types';
 
 interface GameMenuProps {
@@ -25,9 +25,9 @@ const GameMenu: React.FC<GameMenuProps> = ({
   dailyLeaderboard,
 }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4 font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4 font-sans relative overflow-x-hidden overflow-y-auto md:overflow-hidden">
       {/* Animated Background Pattern */}
-      <div className="absolute inset-0 opacity-25 pointer-events-none">
+      <div className="absolute inset-0 opacity-25 pointer-events-none overflow-hidden">
         <div 
           className="absolute inset-0 animate-diagonal-scroll"
           style={{
@@ -42,46 +42,102 @@ const GameMenu: React.FC<GameMenuProps> = ({
       
       <div className="max-w-md w-full relative z-10">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-6xl font-bold text-white mb-3 drop-shadow-2xl">
-            🌍 <span className="bg-gradient-to-r from-accent-300 to-accent-400 bg-clip-text text-transparent">TriviaGuessr</span>
+        <div className="text-center mb-6">
+          <h1 className="text-5xl font-bold text-white mb-2 drop-shadow-2xl">
+            🌍 <span className="bg-gradient-to-r from-accent-300 to-accent-400 bg-clip-text text-transparent">Trivial</span>
           </h1>
-          <p className="text-primary-200 text-xl font-medium drop-shadow-lg">Guess locations around the world</p>
+          <p className="text-primary-200 text-lg font-medium drop-shadow-lg">Guess locations around the world</p>
         </div>
         
-        <div className="space-y-6">
+        <div className="space-y-4">
+          {/* Daily Leaderboard */}
+          <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-white/10">
+            <h3 className="text-white font-bold text-lg mb-3 flex items-center gap-2">
+              <div className="p-1.5 bg-accent-300/20 rounded-lg">
+                <Crown className="w-5 h-5 text-accent-300" />
+              </div>
+              Daily Leaderboard
+            </h3>
+            <div className="space-y-2 max-h-24 overflow-y-auto">
+              {dailyLeaderboard.slice(0, 3).map((player, index) => (
+                <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors duration-200">
+                  <span className="text-white flex items-center gap-2">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-black font-bold text-xs shadow-lg ${
+                      index === 0 ? 'bg-gradient-to-r from-accent-300 to-accent-400' :
+                      index === 1 ? 'bg-gradient-to-r from-gray-300 to-gray-400' :
+                      'bg-gradient-to-r from-amber-600 to-amber-700'
+                    }`}>
+                      {player.rank}
+                    </div>
+                    <span className="font-medium text-sm">{player.name}</span>
+                  </span>
+                  <span className="text-primary-200 font-bold text-sm">
+                    {player.score.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+              {dailyLeaderboard.length === 0 && (
+                <div className="text-center py-3 text-white/60">
+                  <p className="text-sm">No scores yet today!</p>
+                  <p className="text-xs mt-1">Be the first to play</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Daily Challenge Button */}
+          <button
+            onClick={onStartDaily}
+            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"
+          >
+            <div className="p-1.5 bg-black/10 rounded-lg">
+              <Calendar className="w-5 h-5" />
+            </div>
+            Daily Challenge
+          </button>
+          
+          {/* Infinite Button */}
+          <button
+            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"
+          >
+            <div className="p-1.5 bg-black/10 rounded-lg">
+              <Infinity className="w-5 h-5" />
+            </div>
+            Infinite Challenge
+          </button>
+          
           {/* Multiplayer Section */}
-          <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/10 hover:border-secondary-400/30 transition-all duration-300">
-            <h3 className="text-white text-xl font-bold flex items-center gap-3 mb-5">
-              <div className="p-2 bg-secondary-500/20 rounded-lg">
-                <Users className="w-6 h-6 text-secondary-300" />
+          <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-white/10 hover:border-secondary-400/30 transition-all duration-300">
+            <h3 className="text-white text-lg font-bold flex items-center gap-2 mb-4">
+              <div className="p-1.5 bg-secondary-500/20 rounded-lg">
+                <Users className="w-5 h-5 text-secondary-300" />
               </div>
               Multiplayer Mode
             </h3>
             
-            <div className="space-y-4">
+            <div className="space-y-3">
               <input
                 type="text"
                 placeholder="Enter your name"
                 value={playerName}
                 onChange={(e) => setPlayerName(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-secondary-400/60 focus:outline-none focus:ring-2 focus:ring-secondary-400/20 transition-all duration-200 backdrop-blur-sm"
+                className="w-full px-3 py-2.5 text-sm rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-secondary-400/60 focus:outline-none focus:ring-2 focus:ring-secondary-400/20 transition-all duration-200 backdrop-blur-sm"
               />
               
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 <input
                   type="text"
                   placeholder="Room Code"
                   value={roomCode}
                   onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                  className="flex-1 px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-primary-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 transition-all duration-200 backdrop-blur-sm"
+                  className="flex-1 px-3 py-2.5 text-sm rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-primary-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 transition-all duration-200 backdrop-blur-sm"
                 />
                 <button
                   onClick={onJoinRoom}
                   disabled={!playerName.trim() || !roomCode.trim()}
-                  className="px-6 py-3 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-primary hover:shadow-lg hover:scale-105 flex items-center gap-2"
+                  className="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-primary hover:shadow-lg hover:scale-105 flex items-center gap-1 text-sm"
                 >
-                  <Play className="w-4 h-4" />
+                  <Play className="w-3 h-3" />
                   Join
                 </button>
               </div>
@@ -89,57 +145,11 @@ const GameMenu: React.FC<GameMenuProps> = ({
               <button
                 onClick={onCreateRoom}
                 disabled={!playerName.trim()}
-                className="w-full py-4 bg-secondary-500 hover:bg-secondary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-secondary hover:shadow-lg hover:scale-105 flex items-center justify-center gap-3"
+                className="w-full py-3 bg-secondary-500 hover:bg-secondary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-secondary hover:shadow-lg hover:scale-105 flex items-center justify-center gap-2 text-sm"
               >
-                <UserPlus className="w-5 h-5" />
+                <UserPlus className="w-4 h-4" />
                 Create Room
               </button>
-            </div>
-          </div>
-
-          {/* Daily Challenge Button */}
-          <button
-            onClick={onStartDaily}
-            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-5 px-6 rounded-2xl font-bold text-xl flex items-center justify-center gap-4 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"
-          >
-            <div className="p-2 bg-black/10 rounded-lg">
-              <Calendar className="w-7 h-7" />
-            </div>
-            Daily Challenge
-          </button>
-
-          {/* Daily Leaderboard */}
-          <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/10">
-            <h3 className="text-white font-bold text-xl mb-4 flex items-center gap-3">
-              <div className="p-2 bg-accent-300/20 rounded-lg">
-                <Crown className="w-6 h-6 text-accent-300" />
-              </div>
-              Daily Leaderboard
-            </h3>
-            <div className="space-y-3">
-              {dailyLeaderboard.slice(0, 3).map((player, index) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors duration-200">
-                  <span className="text-white flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-black font-bold text-sm shadow-lg ${
-                      index === 0 ? 'bg-gradient-to-r from-accent-300 to-accent-400' :
-                      index === 1 ? 'bg-gradient-to-r from-gray-300 to-gray-400' :
-                      'bg-gradient-to-r from-amber-600 to-amber-700'
-                    }`}>
-                      {player.rank}
-                    </div>
-                    <span className="font-medium">{player.name}</span>
-                  </span>
-                  <span className="text-primary-200 font-bold text-lg">
-                    {player.score.toLocaleString()}
-                  </span>
-                </div>
-              ))}
-              {dailyLeaderboard.length === 0 && (
-                <div className="text-center py-6 text-white/60">
-                  <p>No scores yet today!</p>
-                  <p className="text-sm mt-1">Be the first to play</p>
-                </div>
-              )}
             </div>
           </div>
         </div>
