@@ -74,8 +74,10 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
     setCurrentAnswer(newAnswer);
     setShowAnswer(true);
     
-    // Notify parent component about the answer
-    onAnswerSubmitted(newAnswer);
+    setTimeout(() => {
+      onAnswerSubmitted(newAnswer);
+    }, 0);
+    
     
     if (timerRef.current) {
       clearTimeout(timerRef.current);
