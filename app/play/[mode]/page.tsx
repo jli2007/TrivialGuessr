@@ -30,10 +30,6 @@ const GamePage: React.FC = () => {
   const [questionsLoading, setQuestionsLoading] = useState<boolean>(false);
   const [questionsError, setQuestionsError] = useState<string | null>(null);
   
-  // Infinite mode specific state
-  const [totalQuestionsPlayed, setTotalQuestionsPlayed] = useState<number>(0);
-  const [isLoadingNewQuestions, setIsLoadingNewQuestions] = useState<boolean>(false);
-  
   // Multiplayer state
   const [roomCode, setRoomCode] = useState<string>('');
   const [playerName, setPlayerName] = useState<string>('');
@@ -47,7 +43,7 @@ const GamePage: React.FC = () => {
 
   // Redirect invalid modes
   useEffect(() => {
-    if (!['daily', 'infinite', 'multiplayer'].includes(mode)) {
+    if (!['daily', 'casual', 'multiplayer'].includes(mode)) {
       router.push('/');
       return;
     }
@@ -110,8 +106,8 @@ const GamePage: React.FC = () => {
         case 'daily':
           endpoint = '/api/daily_challenge?action=all';
           break;
-        case 'infinite':
-          // For infinite mode, get random questions from questions table
+        case 'casual':
+          // For casual mode, get random questions from questions table
           endpoint = `/api/questions?action=random&limit=10&offset=${offset}`;
           break;
         case 'multiplayer':
@@ -156,7 +152,7 @@ const GamePage: React.FC = () => {
     if (googleMapsLoaded && !mapsLoadAttempted) return; // Wait for maps to be fully loaded
     
     if (googleMapsLoaded) {
-      if (mode === 'daily' || mode === 'infinite') {
+      if (mode === 'daily' || mode === 'casual') {
         initializeGame();
       } else if (mode === 'multiplayer') {
         setGameStarted(false);
@@ -183,7 +179,6 @@ const GamePage: React.FC = () => {
     setAnswers([]);
     setGameComplete(false);
     setGameStarted(true);
-    setTotalQuestionsPlayed(0);
   };
 
   const createRoom = (): void => {
@@ -238,14 +233,14 @@ const GamePage: React.FC = () => {
   };
 
   // Render loading screen if Google Maps is not loaded or questions are loading
-  if ((!googleMapsLoaded && !apiKeyMissing) || questionsLoading || isLoadingNewQuestions) {
+  if ((!googleMapsLoaded && !apiKeyMissing) || questionsLoading) {
     return <LoadingScreen />;
   }
 
   // Render API key error if needed
   if (apiKeyMissing) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4">
         <div className="max-w-2xl w-full bg-white/10 backdrop-blur-md rounded-xl p-8 text-center">
           <div className="text-6xl mb-4">🗺️</div>
           <h2 className="text-3xl font-bold text-white mb-6">Google Maps Integration</h2>
@@ -275,7 +270,7 @@ const GamePage: React.FC = () => {
   // Render questions error if needed
   if (questionsError && questions.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4">
         <div className="max-w-2xl w-full bg-white/10 backdrop-blur-md rounded-xl p-8 text-center">
           <div className="text-6xl mb-4">❌</div>
           <h2 className="text-3xl font-bold text-white mb-6">Questions Loading Error</h2>
@@ -320,7 +315,7 @@ const GamePage: React.FC = () => {
         <GameQuestion
           question={questions[currentQuestion]}
           currentQuestion={currentQuestion}
-          totalQuestions={mode === 'infinite' ? 10 : questions.length}
+          totalQuestions={mode === 'casual' ? 10 : questions.length}
           score={score}
           onAnswerSubmitted={handleAnswerSubmitted}
           onNextRound={handleNextRound}
@@ -332,7 +327,7 @@ const GamePage: React.FC = () => {
   // Render multiplayer lobby setup if not started
   if (mode === 'multiplayer' && !gameStarted && roomPlayers.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4">
         <div className="max-w-2xl w-full bg-white/10 backdrop-blur-md rounded-xl p-8">
           <h2 className="text-3xl font-bold text-white mb-8 text-center">Join Multiplayer Game</h2>
           

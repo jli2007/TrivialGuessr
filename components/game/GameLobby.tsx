@@ -19,7 +19,7 @@ const GameLobby: React.FC<GameLobbyProps> = ({
   onLeaveRoom,
 }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white/10 backdrop-blur-md rounded-xl p-6">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-white mb-2">Room: {roomCode}</h2>

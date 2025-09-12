@@ -7,7 +7,7 @@ import { LeaderboardEntry } from "@/types/leaderboard";
 
 interface GameMenuProps {
   onStartDaily: () => void;
-  onStartInfinite: () => void;
+  onStartCasual: () => void;
   onCreateRoom: () => void;
   onJoinRoom: () => void;
   playerName: string;
@@ -19,7 +19,7 @@ interface GameMenuProps {
 
 const GameMenu: React.FC<GameMenuProps> = ({
   onStartDaily,
-  onStartInfinite,
+  onStartCasual,
   onCreateRoom,
   onJoinRoom,
   playerName,
@@ -29,7 +29,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
   dailyLeaderboard,
 }) => {
   const [isDailyHovered, setIsDailyHovered] = useState(false);
-  const [isInfiniteHovered, setIsInfiniteHovered] = useState(false);
+  const [isCasualHovered, setIsCasualHovered] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4 font-sans relative overflow-x-hidden overflow-y-auto md:overflow-hidden">
@@ -133,17 +133,17 @@ const GameMenu: React.FC<GameMenuProps> = ({
             )}
           </button>
 
-          {/* Infinite Button - Added onClick handler */}
+          {/* Casual Button - Added onClick handler */}
           <button
-            onClick={onStartInfinite}
-            onMouseEnter={() => setIsInfiniteHovered(true)}
-            onMouseLeave={() => setIsInfiniteHovered(false)}
+            onClick={onStartCasual}
+            onMouseEnter={() => setIsCasualHovered(true)}
+            onMouseLeave={() => setIsCasualHovered(false)}
             className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"
           >
             <div className="p-1.5 bg-black/10 rounded-lg">
               <Infinity className="w-5 h-5" />
             </div>
-            {isInfiniteHovered ? (
+            {isCasualHovered ? (
               <TypingAnimation
                 className="text-lg font-bold text-gray-900 inline"
                 startOnView={true}
