@@ -57,7 +57,7 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
   useEffect(() => {
     setSelectedLocation(null);
     setShowAnswer(false);
-    setTimeLeft(60);
+    setTimeLeft(60); // Consistent 60 second timer
     setCurrentAnswer(null);
   }, [currentQuestion]);
 
@@ -111,11 +111,18 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
 
     setCurrentAnswer(newAnswer);
     setShowAnswer(true);
+    
+    // Notify parent component about the answer
     onAnswerSubmitted(newAnswer);
     
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
+
+    // Auto-advance to next round after 6 seconds
+    setTimeout(() => {
+      handleNextRound();
+    }, 6000);
   };
 
   const handleNextRound = (): void => {

@@ -1,28 +1,28 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Location, GameAnswer, Player, Question } from '@typesFolder/index';
-import { haversineDistance, calculateScore, generateRoomCode, loadGoogleMapsScript } from '@utils/gameUtils';
+import { GameMode, Location, GameAnswer, Player} from '@typesFolder/index';
+import {Question} from '@typesFolder/question';
+import { generateRoomCode, loadGoogleMapsScript } from '@utils/gameUtils';
 import GameLobby from '@components/game/GameLobby';
 import GameQuestion from '@components/game/GameQuestion';
 import RoundResult from '@components/RoundResult';
 import GameResult from '@components/game/GameResult';
 import LoadingScreen from '@components/LoadingScreen';
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyCNwD45N6q_OTQhA7I6wZTEg-UQYsM8RHo";
+// Use your API key implementation
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
 const GamePage: React.FC = () => {
   const router = useRouter();
   const params = useParams();
   const mode = params?.mode as string;
 
+  // Game state
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
   const [score, setScore] = useState<number>(0);
   const [answers, setAnswers] = useState<GameAnswer[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
-  const [showResult, setShowResult] = useState<boolean>(false);
-  const [timeLeft, setTimeLeft] = useState<number>(60);
   const [gameComplete, setGameComplete] = useState<boolean>(false);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   
@@ -38,11 +38,9 @@ const GamePage: React.FC = () => {
   const [roomPlayers, setRoomPlayers] = useState<Player[]>([]);
   
   // UI state
-  const [isMapFullscreen, setIsMapFullscreen] = useState<boolean>(false);
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState<boolean>(false);
   const [apiKeyMissing, setApiKeyMissing] = useState<boolean>(false);
-  
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [mapsLoadAttempted, setMapsLoadAttempted] = useState<boolean>(false);
 
   // Redirect invalid modes
   useEffect(() => {
@@ -52,80 +50,111 @@ const GamePage: React.FC = () => {
     }
   }, [mode, router]);
 
-  // Load Google Maps API
+  // Load Google Maps API - FIXED VERSION
   useEffect(() => {
-    if (typeof window !== 'undefined' && !window.google) {
-      loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
-        .then(() => setGoogleMapsLoaded(true))
-        .catch(() => setApiKeyMissing(true));
-    } else if (window.google) {
-      setGoogleMapsLoaded(true);
+    // Prevent multiple loading attempts
+    if (mapsLoadAttempted) return;
+
+    const loadMapsAPI = async () => {
+      setMapsLoadAttempted(true);
+
+      // Check if Google Maps is already loaded
+      if (typeof window !== 'undefined' && window.google?.maps) {
+        console.log('Google Maps already loaded');
+        setGoogleMapsLoaded(true);
+        return;
+      }
+
+      // Check if script is already being loaded
+      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+      if (existingScript) {
+        console.log('Google Maps script already exists, waiting for load...');
+        
+        // Wait for existing script to load
+        existingScript.addEventListener('load', () => {
+          setGoogleMapsLoaded(true);
+        });
+        
+        existingScript.addEventListener('error', () => {
+          setApiKeyMissing(true);
+        });
+        
+        return;
+      }
+
+      // Load the script for the first time
+      try {
+        await loadGoogleMapsScript(GOOGLE_MAPS_API_KEY);
+        setGoogleMapsLoaded(true);
+      } catch (error) {
+        console.error('Failed to load Google Maps:', error);
+        setApiKeyMissing(true);
+      }
+    };
+
+    loadMapsAPI();
+  }, []); // Remove dependencies to prevent re-runs
+
+  // Server integration function
+  const fetchQuestions = async (gameMode: string): Promise<Question[]> => {
+    setQuestionsLoading(true);
+    setQuestionsError(null);
+
+    try {
+      let endpoint = '';
+
+      switch (gameMode) {
+        case 'daily':
+          endpoint = '/api/daily_challenge?action=all';
+          break;
+        case 'infinite':
+          endpoint = '/api/questions?action=random&limit=100';
+          break;
+        case 'multiplayer':
+          endpoint = '/api/questions?action=random';
+          break;
+        default:
+          throw new Error('Invalid game mode');
+      }
+
+      const response = await fetch(endpoint);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch questions: ${response.statusText}`);
+      }
+
+      const parsed = (await response.json()) as unknown;
+      console.log("Server response:", parsed);
+
+      let questions: Question[] = [];
+      if (Array.isArray(parsed)) {
+        questions = parsed as Question[];
+      } else if ((parsed as any)?.questions && Array.isArray((parsed as any).questions)) {
+        questions = (parsed as any).questions as Question[];
+      }
+
+      if (!Array.isArray(questions) || questions.length === 0) {
+        throw new Error('No questions received from server');
+      }
+
+      return questions;
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      setQuestionsError(error instanceof Error ? error.message : 'Failed to load questions');
+      return [];
+    } finally {
+      setQuestionsLoading(false);
     }
-  }, []);
-
- // --- changed/added comments mark what I modified/added ---
-const fetchQuestions = async (gameMode: string): Promise<Question[]> => {
-  setQuestionsLoading(true);
-  setQuestionsError(null);
-
-  try {
-    let endpoint = '';
-
-    switch (gameMode) {
-      case 'daily':
-        endpoint = '/api/daily_challenge?action=all';
-        break;
-      case 'infinite':
-        endpoint = '/api/questions?action=random&limit=100';
-        break;
-      case 'multiplayer':
-        endpoint = '/api/questions?action=random';
-        break;
-      default:
-        throw new Error('Invalid game mode');
-    }
-
-    const response = await fetch(endpoint);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch questions: ${response.statusText}`);
-    }
-
-    // <-- changed: allow either an array or an object with .questions
-    const parsed = (await response.json()) as unknown; // <-- added
-    console.log("FRICKIN PARSED", parsed); // <-- added: inspect raw parsed payload
-
-    // <-- added: normalize to an array whether the server returned Question[] or { questions: Question[] }
-    let questions: Question[] = [];
-    if (Array.isArray(parsed)) {
-      questions = parsed as Question[];
-    } else if ((parsed as any)?.questions && Array.isArray((parsed as any).questions)) {
-      questions = (parsed as any).questions as Question[];
-    }
-
-    // <-- changed: validate the normalized questions array (not `data` object)
-    if (!Array.isArray(questions) || questions.length === 0) {
-      throw new Error('No questions received from server');
-    }
-
-    return questions; // <-- unchanged: return normalized array
-  } catch (error) {
-    console.error('Error fetching questions:', error);
-    setQuestionsError(error instanceof Error ? error.message : 'Failed to load questions');
-    return [];
-  } finally {
-    setQuestionsLoading(false);
-  }
-};
-
+  };
 
   // Initialize game based on mode
   useEffect(() => {
+    if (googleMapsLoaded && !mapsLoadAttempted) return; // Wait for maps to be fully loaded
+    
     if (googleMapsLoaded) {
       if (mode === 'daily' || mode === 'infinite') {
         initializeGame();
       } else if (mode === 'multiplayer') {
-        // For multiplayer, we need lobby setup first
         setGameStarted(false);
       }
     }
@@ -135,7 +164,7 @@ const fetchQuestions = async (gameMode: string): Promise<Question[]> => {
   const initializeGame = async (): Promise<void> => {
     try {
       const fetchedQuestions = await fetchQuestions(mode);
-      console.log(fetchedQuestions);
+      console.log('Loaded questions:', fetchedQuestions);
       setQuestions(fetchedQuestions);
       startGame();
     } catch (error) {
@@ -144,39 +173,11 @@ const fetchQuestions = async (gameMode: string): Promise<Question[]> => {
     }
   };
 
-  // Timer effect
-  useEffect(() => {
-    if (gameStarted && !showResult && !gameComplete && timeLeft > 0) {
-      timerRef.current = setTimeout(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            handleAnswer();
-            return 60;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    }
-    
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, [gameStarted, showResult, gameComplete, timeLeft]);
-
   const startGame = (): void => {
     setCurrentQuestion(0);
     setScore(0);
     setAnswers([]);
     setGameComplete(false);
-    setTimeLeft(60);
-    setSelectedLocation(null);
-    setShowResult(false);
     setGameStarted(true);
   };
 
@@ -209,58 +210,24 @@ const fetchQuestions = async (gameMode: string): Promise<Question[]> => {
     }
   };
 
-  const handleLocationSelect = (location: Location): void => {
-    setSelectedLocation(location);
+  // Handle answer submission from GameQuestion
+  const handleAnswerSubmitted = (answer: GameAnswer): void => {
+    setAnswers(prev => [...prev, answer]);
+    setScore(prev => prev + answer.score);
   };
 
-  const handleAnswer = (): void => {
-    const question = questions[currentQuestion];
-    let distance: number | null = null;
-    let questionScore = 0;
-    
-    if (selectedLocation) {
-      distance = haversineDistance(
-        selectedLocation.lat,
-        selectedLocation.lng,
-        question.correct_coordinates.lat,
-        question.correct_coordinates.lng
-      );
-      questionScore = calculateScore(distance);
-    }
-    
-    const newAnswer: GameAnswer = {
-      question: question.prompt,
-      userGuess: selectedLocation,
-      correctLocation: question.correct_coordinates,
-      correctAnswer: question.correct_answer,
-      distance,
-      score: questionScore
-    };
-
-    setAnswers(prev => [...prev, newAnswer]);
-    setScore(prev => prev + questionScore);
-    setShowResult(true);
-    
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
-
-    setTimeout(() => {
-      setShowResult(false);
-      setSelectedLocation(null);
-      if (currentQuestion < questions.length - 1) {
-        setCurrentQuestion(prev => prev + 1);
-        setTimeLeft(60);
+  // Handle moving to next round from GameQuestion
+  const handleNextRound = (): void => {
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(prev => prev + 1);
+    } else {
+      // Handle end of questions
+      if (mode === 'infinite') {
+        fetchNewQuestionsForInfinite();
       } else {
-        // Handle end of questions
-        if (mode === 'infinite') {
-          // For infinite mode, fetch new random questions
-          fetchNewQuestionsForInfinite();
-        } else {
-          setGameComplete(true);
-        }
+        setGameComplete(true);
       }
-    }, 6000);
+    }
   };
 
   // Fetch new questions for infinite mode
@@ -269,21 +236,18 @@ const fetchQuestions = async (gameMode: string): Promise<Question[]> => {
       const newQuestions = await fetchQuestions('infinite');
       setQuestions(newQuestions);
       setCurrentQuestion(0);
-      setTimeLeft(60);
     } catch (error) {
       console.error('Failed to fetch new questions for infinite mode:', error);
-      // Loop back to current questions
-      setCurrentQuestion(0);
-      setTimeLeft(60);
+      if (questions.length > 0) {
+        setCurrentQuestion(0);
+      } else {
+        setGameComplete(true);
+      }
     }
   };
 
   const handleGameEnd = (): void => {
     router.push('/');
-  };
-
-  const toggleFullscreen = (): void => {
-    setIsMapFullscreen(prev => !prev);
   };
 
   // Render loading screen if Google Maps is not loaded or questions are loading
@@ -362,18 +326,22 @@ const fetchQuestions = async (gameMode: string): Promise<Question[]> => {
     );
   }
 
-  // Render round result screen
-  if (showResult && answers.length > 0) {
+  // MAIN GAME RENDERING - This is where GameQuestion gets rendered
+  if (gameStarted && questions.length > 0 && currentQuestion < questions.length) {
     return (
-      <RoundResult
-        lastAnswer={answers[answers.length - 1]}
+      <GameQuestion
+        question={questions[currentQuestion]}
+        currentQuestion={currentQuestion}
+        totalQuestions={questions.length}
         score={score}
+        onAnswerSubmitted={handleAnswerSubmitted}
+        onNextRound={handleNextRound}
       />
     );
   }
 
-  // Render multiplayer lobby if not started
-  if (mode === 'multiplayer' && !gameStarted) {
+  // Render multiplayer lobby setup if not started
+  if (mode === 'multiplayer' && !gameStarted && roomPlayers.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
         <div className="max-w-2xl w-full bg-white/10 backdrop-blur-md rounded-xl p-8">
@@ -443,26 +411,6 @@ const fetchQuestions = async (gameMode: string): Promise<Question[]> => {
         onStartGame={startMultiplayerGame}
         onLeaveRoom={handleGameEnd}
       />
-    );
-  }
-
-  // Render main game (only if we have questions loaded)
-  if (gameStarted && questions.length > 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
-        <GameQuestion
-          question={questions[currentQuestion]}
-          currentQuestion={currentQuestion}
-          totalQuestions={mode === 'infinite' ? 0 : questions.length}
-          score={score}
-          timeLeft={timeLeft}
-          selectedLocation={selectedLocation}
-          isMapFullscreen={isMapFullscreen}
-          onLocationSelect={handleLocationSelect}
-          onSubmitGuess={handleAnswer}
-          onToggleFullscreen={toggleFullscreen}
-        />
-      </div>
     );
   }
 
