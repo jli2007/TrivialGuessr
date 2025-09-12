@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Clock, Target, Globe, Info, MapPin, Calendar, Star, ArrowRight } from 'lucide-react';
 import { Question } from '../../types/question';
 import { Location, GameAnswer } from '../../types';
@@ -28,46 +28,8 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
   const [currentAnswer, setCurrentAnswer] = useState<GameAnswer | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Timer effect
-  useEffect(() => {
-    if (!showAnswer && timeLeft > 0) {
-      timerRef.current = setTimeout(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            handleSubmitGuess();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    }
-    
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, [showAnswer, timeLeft]);
-
-  // Reset state when question changes
-  useEffect(() => {
-    setSelectedLocation(null);
-    setShowAnswer(false);
-    setTimeLeft(60); // Consistent 60 second timer
-    setCurrentAnswer(null);
-  }, [currentQuestion]);
-
-  const handleLocationSelect = (location: Location): void => {
-    if (!showAnswer) {
-      setSelectedLocation(location);
-    }
-  };
-
-  const handleSubmitGuess = (): void => {
+  // Wrap handleSubmitGuess in useCallback to prevent unnecessary re-renders
+  const handleSubmitGuess = useCallback((): void => {
     if (showAnswer) return;
 
     let distance: number | null = null;
@@ -118,11 +80,45 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
+  }, [showAnswer, selectedLocation, question, onAnswerSubmitted, onNextRound]);
 
-    // Auto-advance to next round after 6 seconds
-    setTimeout(() => {
-      handleNextRound();
-    }, 6000);
+  // Timer effect - now includes handleSubmitGuess in dependency array
+  useEffect(() => {
+    if (!showAnswer && timeLeft > 0) {
+      timerRef.current = setTimeout(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            handleSubmitGuess();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    }
+    
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, [showAnswer, timeLeft, handleSubmitGuess]); // Added handleSubmitGuess dependency
+
+  // Reset state when question changes
+  useEffect(() => {
+    setSelectedLocation(null);
+    setShowAnswer(false);
+    setTimeLeft(60); // Consistent 60 second timer
+    setCurrentAnswer(null);
+  }, [currentQuestion]);
+
+  const handleLocationSelect = (location: Location): void => {
+    if (!showAnswer) {
+      setSelectedLocation(location);
+    }
   };
 
   const handleNextRound = (): void => {
