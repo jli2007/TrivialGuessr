@@ -189,72 +189,68 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
       
       {!showAnswer ? (
         <>
-          {/* Question Card - Top Left */}
+          {/* Timer - Center Top */}
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 rounded-xl shadow-2xl border border-white/10">
+            {/* Background with adjustable opacity */}
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-md rounded-xl"></div>
+            
+            {/* Content with full opacity */}
+            <div className="relative px-6 py-3 text-white">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-blue-400" />
+                <span className={`font-bold text-xl ${timeLeft <= 10 ? 'text-red-400' : 'text-white'}`}>
+                  {timeLeft}s
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Score and Round Card - Top Left */}
+          <div className="absolute top-4 right-4 z-10 rounded-xl shadow-2xl border border-white/10">
+            {/* Background with adjustable opacity */}
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-md rounded-xl"></div>
+            
+            {/* Content with full opacity */}
+            <div className="relative p-4 text-white">
+              <div className="text-sm">
+                <span className="text-white/70">Round {currentQuestion + 1} of {totalQuestions}</span>
+                <div className="font-bold text-lg">Score: {score.toLocaleString()}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Question Card - Top Left (below score card) */}
           <div className="absolute top-4 left-4 z-10 rounded-xl shadow-2xl max-w-sm w-80 border border-white/10">
             {/* Background with adjustable opacity */}
             <div className="absolute inset-0 bg-black/70 backdrop-blur-md rounded-xl"></div>
             
             {/* Content with full opacity */}
             <div className="relative p-4 text-white">
-              {/* Header */}
-              <div className="flex justify-between items-center mb-3">
-                <div className="text-sm">
-                  <span className="text-white/70">Round {currentQuestion + 1} of {totalQuestions}</span>
-                  <div className="font-bold text-lg">Score: {score.toLocaleString()}</div>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="w-4 h-4 text-blue-400" />
-                  <span className={`font-bold ${timeLeft <= 10 ? 'text-red-400' : 'text-white'}`}>
-                    {timeLeft}s
-                  </span>
-                </div>
-              </div>
-              
               {/* Question Content */}
               <div className="mb-4">
                 <h2 className="text-lg font-bold mb-3 leading-tight">{question.question}</h2>
 
                 {/* Category and Difficulty Row */}
                 <div className="mb-3 flex items-center gap-2 text-xs flex-wrap">
-                  <div className={`px-2 py-1 rounded-md flex items-center gap-1 ${getCategoryColor(question.category)}`}>
-                    <Star className="w-3 h-3" />
-                    <span>{question.category}</span>
-                  </div>
+                  
                   <div className="bg-gray-500/20 px-2 py-1 rounded-md flex items-center gap-1">
                     <Target className="w-3 h-3" />
                     <span className={getDifficultyColor(question.difficulty)}>
                       {getDifficultyText(question.difficulty)} ({question.difficulty}/10)
                     </span>
                   </div>
-                </div>
-
-                {/* Map instruction */}
-                <div className="text-center text-white/60 py-2">
-      
-                  {selectedLocation && (
-                    <p className="text-xs text-green-400">
-                      📍 Guess placed at {selectedLocation.lat.toFixed(2)}, {selectedLocation.lng.toFixed(2)}
-                    </p>
-                  )}
-                  {!selectedLocation && (
-                  <div className="text-blue-200 text-xs text-center opacity-75 px-2">
-                    Place Your Guess!
-                  </div>
-                )}
-                </div>  
-                
+                </div> 
               </div>
               
               {/* Submit Button */}
               <button
                 onClick={handleSubmitGuess}
                 disabled={!selectedLocation}
-                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2 shadow-lg disabled:shadow-none mb-3"
+                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2 shadow-lg disabled:shadow-none"
               >
                 <Target className="w-4 h-4" />
                 Submit Guess
               </button>
-              
             </div>
           </div>
 
