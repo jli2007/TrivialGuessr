@@ -107,7 +107,7 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
         clearTimeout(timerRef.current);
       }
     };
-  }, [showAnswer, timeLeft, handleSubmitGuess]); // Added handleSubmitGuess dependency
+  }, [showAnswer, timeLeft, handleSubmitGuess]);
 
   // Reset state when question changes
   useEffect(() => {

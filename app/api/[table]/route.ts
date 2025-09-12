@@ -16,6 +16,7 @@ export async function GET(
     const url = new URL(request.url);
     const action = url.searchParams.get("action");
     const limit = parseInt(url.searchParams.get("limit") ?? "1", 10);
+    const orderBy = url.searchParams.get("orderBy");
 
     if (!table) {
       return NextResponse.json(
@@ -29,6 +30,11 @@ export async function GET(
         const activeRows = await getAllRows(table);
         console.log( `Returning ${activeRows.length} rows`);
         return NextResponse.json({ questions: activeRows }, { status: 200 });
+      }
+
+      case "leaderboard": {
+        const leaderboardRows = await getAllRows(table, limit, orderBy || 'total_score', false);
+        return NextResponse.json(leaderboardRows, { status: 200 });
       }
 
       case "random": {

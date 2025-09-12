@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { QuestionGenerator } from "@/lib/question-generator";
 import { supabaseClient } from "@/lib/supabase/supabaseClient";
 
@@ -82,7 +81,7 @@ class QuestionValidator {
       .toLowerCase()
       .replace(/[^\w\s]/g, ' ')
       .split(/\s+/)
-      .filter(word => word.length > 2 && !stopWords.includes(word))
+      .filter((word: string) => word.length > 2 && !stopWords.includes(word))
       .slice(0, 4);
     
     return [...questionWords, question.answer_city, question.answer_country]
@@ -247,7 +246,7 @@ async function populateAndValidateQuestions() {
 
   console.log(`🌍 Starting generation and validation...`);
   
-  let allGeneratedQuestions: any[] = [];
+  const allGeneratedQuestions: any[] = [];
 
   // 1. GENERATE QUESTIONS (your existing logic)
   for (const questionType of questionTypes) {

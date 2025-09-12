@@ -1,17 +1,6 @@
-// types/index.ts
 export interface Location {
   lat: number;
   lng: number;
-}
-
-export interface Question {
-  id: number;
-  type: "image" | "text" | "audio";
-  prompt: string;
-  asset_url: string | null;
-  answer_type: "location";
-  correct_answer: string;
-  correct_coordinates: Location;
 }
 
 export interface GameAnswer {
@@ -22,16 +11,12 @@ export interface GameAnswer {
   distance: number | null;
   score: number;
 }
-
 export interface Player {
   name: string;
   score: number;
   isHost?: boolean;
   rank?: number;
 }
-
-export type GameMode = 'menu' | 'lobby' | 'daily' | 'multiplayer';
-
 export interface GoogleMapProps {
   onLocationSelect: (location: Location) => void;
   selectedLocation: Location | null;
@@ -48,7 +33,7 @@ declare global {
 }
 
 export interface GameState {
-  gameMode: GameMode;
+  gameMode: 'menu' | 'lobby' | 'daily' | 'multiplayer';
   currentQuestion: number;
   score: number;
   answers: GameAnswer[];

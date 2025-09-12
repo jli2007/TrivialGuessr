@@ -1,20 +1,20 @@
 // components/GameMenu.tsx
 import React, { useState } from "react";
 import { Calendar, Users, Crown, Play, UserPlus, Infinity } from "lucide-react";
-import { Player } from "../../types";
 import { TypingAnimation } from "@/components/magicui/typing-animation";
 import { AnimatedGradientText } from "@/components/magicui/animated-gradient-text";
+import { LeaderboardEntry } from "@/types/leaderboard";
 
 interface GameMenuProps {
   onStartDaily: () => void;
-  onStartInfinite: () => void; // Added this prop
+  onStartInfinite: () => void;
   onCreateRoom: () => void;
   onJoinRoom: () => void;
   playerName: string;
   setPlayerName: (name: string) => void;
   roomCode: string;
   setRoomCode: (code: string) => void;
-  dailyLeaderboard: Player[];
+  dailyLeaderboard: LeaderboardEntry[];
 }
 
 const GameMenu: React.FC<GameMenuProps> = ({
@@ -94,10 +94,10 @@ const GameMenu: React.FC<GameMenuProps> = ({
                     >
                       {player.rank}
                     </div>
-                    <span className="font-medium text-sm">{player.name}</span>
+                    <span className="font-medium text-sm">{player.player_name}</span>
                   </span>
                   <span className="text-primary-200 font-bold text-sm">
-                    {player.score.toLocaleString()}
+                    {player.total_score}
                   </span>
                 </div>
               ))}
@@ -135,7 +135,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
 
           {/* Infinite Button - Added onClick handler */}
           <button
-            onClick={onStartInfinite} // Added this click handler
+            onClick={onStartInfinite}
             onMouseEnter={() => setIsInfiniteHovered(true)}
             onMouseLeave={() => setIsInfiniteHovered(false)}
             className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"

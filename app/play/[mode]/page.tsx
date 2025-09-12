@@ -2,12 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { GameMode, Location, GameAnswer, Player} from '@typesFolder/index';
+import { GameAnswer, Player} from '@typesFolder/index';
 import {Question} from '@typesFolder/question';
 import { generateRoomCode, loadGoogleMapsScript } from '@utils/gameUtils';
 import GameLobby from '@components/game/GameLobby';
 import GameQuestion from '@components/game/GameQuestion';
-import RoundResult from '@components/RoundResult';
 import GameResult from '@components/game/GameResult';
 import LoadingScreen from '@components/LoadingScreen';
 

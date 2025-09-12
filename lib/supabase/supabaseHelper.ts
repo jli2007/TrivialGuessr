@@ -17,38 +17,30 @@ export async function getFirstRow(tableName: string) {
 }
 
 export async function getAllRows<Row, TableName extends string = string>(
-  tableName: TableName
+  tableName: TableName,
+  limit?: number,
+  orderBy?: string,
+  ascending: boolean = false
 ): Promise<Row[]> {
-  console.log(`🔍 Fetching from table: "${tableName}"`);
-  
   try {
-    const { data, error, status, statusText } = await supabaseClient
-      .from<TableName, Row>(tableName)
-      .select("*");
+    let query = supabaseClient.from<TableName, Row>(tableName).select("*");
 
-    console.log(`📊 Supabase response:`, {
-      status,
-      statusText,
-      hasError: !!error,
-      dataLength: data?.length ?? 0,
-      error: error?.message || null
-    });
+    if (orderBy) {
+      query = query.order(orderBy, { ascending });
+    }
+
+    if (limit) {
+      query = query.limit(limit);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
-      console.error(`❌ Supabase error for table "${tableName}":`, error);
       throw new Error(`Database error: ${error.message}`);
     }
 
-    if (!data) {
-      console.warn(`⚠️ No data returned for table "${tableName}"`);
-      return [];
-    }
-
-    console.log(`✅ Successfully fetched ${data.length} rows from "${tableName}"`);
-    return data;
-
+    return data || [];
   } catch (err) {
-    console.error(`💥 Exception in getAllRows for table "${tableName}":`, err);
     throw err;
   }
 }
