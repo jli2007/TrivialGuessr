@@ -7,6 +7,7 @@ import { AnimatedGradientText } from "@/components/magicui/animated-gradient-tex
 
 interface GameMenuProps {
   onStartDaily: () => void;
+  onStartInfinite: () => void; // Added this prop
   onCreateRoom: () => void;
   onJoinRoom: () => void;
   playerName: string;
@@ -18,6 +19,7 @@ interface GameMenuProps {
 
 const GameMenu: React.FC<GameMenuProps> = ({
   onStartDaily,
+  onStartInfinite,
   onCreateRoom,
   onJoinRoom,
   playerName,
@@ -131,8 +133,9 @@ const GameMenu: React.FC<GameMenuProps> = ({
             )}
           </button>
 
-          {/* Infinite Button */}
+          {/* Infinite Button - Added onClick handler */}
           <button
+            onClick={onStartInfinite} // Added this click handler
             onMouseEnter={() => setIsInfiniteHovered(true)}
             onMouseLeave={() => setIsInfiniteHovered(false)}
             className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"

@@ -23,9 +23,14 @@ const HomePage: React.FC = () => {
     router.push('/play/multiplayer');
   };
 
+  const handleStartInfinite = () => {
+    router.push('/play/infinite');
+  };
+
   return (
     <GameMenu
       onStartDaily={handleStartDaily}
+      onStartInfinite={handleStartInfinite} 
       onCreateRoom={handleCreateRoom}
       onJoinRoom={handleJoinRoom}
       playerName={playerName}
