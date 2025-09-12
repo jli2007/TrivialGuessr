@@ -37,7 +37,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
         },
         strictBounds: false
       },
-      mapTypeControl: true,
+      mapTypeControl: showAnswer,
       streetViewControl: false,
       fullscreenControl: false,
       mapTypeId: google.maps.MapTypeId.HYBRID,
@@ -63,10 +63,20 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
     googleMapRef.current = map;
   }, [mapRef.current, window.google, onLocationSelect, showAnswer]);
 
+  // toggles MapTypeControl
+  useEffect(() => {
+    const map = googleMapRef.current;
+    if (!map) return;
+
+    map.setOptions({
+      mapTypeControl: showAnswer
+    });
+  }, [showAnswer]);
+
   // Update markers when locations change
   useEffect(() => {
     const map = googleMapRef.current;
-    if (!map || !window.google) return;
+    if (!map || !window.google || (showAnswer && markersRef.current.length == 2)) return;
 
     // Clear existing markers and polylines
     markersRef.current.forEach(marker => marker.setMap(null));
@@ -113,7 +123,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
         map: map,
         title: 'Correct Location',
         icon: {
-          path: google.maps.SymbolPath.CIRCLE,
+          url: '/marker.svg',
           scale: 12,
           fillColor: '#22c55e',
           fillOpacity: 0.9,
@@ -194,21 +204,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
   return (
     <div className={`relative bg-blue-900 rounded-lg overflow-hidden border-2 border-white/20 ${isFullscreen ? 'h-full' : 'h-96'}`}>
       <div ref={mapRef} className="w-full h-full" />
-      
-      {!showAnswer && (
-        <div className="absolute top-4 left-4 bg-black/70 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-2 backdrop-blur-sm">
-          <MapPin className="w-4 h-4" />
-          Click anywhere to place your guess
-        </div>
-      )}
-      
-      {selectedLocation && !showAnswer && (
-        <div className="absolute top-4 right-4 bg-red-500/90 text-white px-3 py-2 rounded-lg flex items-center gap-2 backdrop-blur-sm">
-          <Target className="w-4 h-4" />
-          Guess placed!
-        </div>
-      )}
-
+ 
       {showAnswer && selectedLocation && correctLocation && (
         <div className="absolute bottom-4 left-4 bg-black/85 text-white px-4 py-3 rounded-lg text-sm backdrop-blur-sm border border-white/20">
           <div className="flex items-center gap-2 mb-1">
@@ -233,19 +229,6 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
         </div>
       )}
 
-      {showAnswer && (
-        <div className="absolute top-4 right-4 bg-green-600/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-sm">
-          <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-          <span className="font-medium">Correct Location</span>
-        </div>
-      )}
-
-      {showAnswer && selectedLocation && (
-        <div className="absolute top-16 right-4 bg-red-600/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-sm">
-          <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-          <span className="font-medium">Your Guess</span>
-        </div>
-      )}
     </div>
   );
 };

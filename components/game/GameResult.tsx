@@ -80,7 +80,7 @@ const GameResult: React.FC<GameResultProps> = ({
             onClick={onPlayAgain}
             className="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
-            Play Again
+            Home
           </button>
         </div>
       </div>

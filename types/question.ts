@@ -17,7 +17,7 @@ export interface QuestionRequest {
   category: string;
   difficulty?: number;
   count: number;
-}
+}       
 
 export type QuestionCategory = 
   | 'historical_figures'
