@@ -31,6 +31,10 @@ const GamePage: React.FC = () => {
   const [questionsLoading, setQuestionsLoading] = useState<boolean>(false);
   const [questionsError, setQuestionsError] = useState<string | null>(null);
   
+  // Infinite mode specific state
+  const [totalQuestionsPlayed, setTotalQuestionsPlayed] = useState<number>(0);
+  const [isLoadingNewQuestions, setIsLoadingNewQuestions] = useState<boolean>(false);
+  
   // Multiplayer state
   const [roomCode, setRoomCode] = useState<string>('');
   const [playerName, setPlayerName] = useState<string>('');
@@ -96,7 +100,7 @@ const GamePage: React.FC = () => {
   }, []); // Remove dependencies to prevent re-runs
 
   // Server integration function
-  const fetchQuestions = async (gameMode: string): Promise<Question[]> => {
+  const fetchQuestions = async (gameMode: string, offset: number = 0): Promise<Question[]> => {
     setQuestionsLoading(true);
     setQuestionsError(null);
 
@@ -108,10 +112,11 @@ const GamePage: React.FC = () => {
           endpoint = '/api/daily_challenge?action=all';
           break;
         case 'infinite':
-          endpoint = '/api/questions?action=random&limit=100';
+          // For infinite mode, get random questions from questions table
+          endpoint = `/api/questions?action=random&limit=20&offset=${offset}`;
           break;
         case 'multiplayer':
-          endpoint = '/api/questions?action=random';
+          endpoint = '/api/questions?action=random&limit=10';
           break;
         default:
           throw new Error('Invalid game mode');
@@ -179,6 +184,7 @@ const GamePage: React.FC = () => {
     setAnswers([]);
     setGameComplete(false);
     setGameStarted(true);
+    setTotalQuestionsPlayed(0);
   };
 
   const createRoom = (): void => {
@@ -216,33 +222,57 @@ const GamePage: React.FC = () => {
     setScore(prev => prev + answer.score);
   };
 
-  // Handle moving to next round from GameQuestion
-  const handleNextRound = (): void => {
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(prev => prev + 1);
+  // UPDATED: Handle moving to next round from GameQuestion
+  const handleNextRound = async (): Promise<void> => {
+    if (mode === 'infinite') {
+      // For infinite mode, always continue
+      const nextQuestionIndex = currentQuestion + 1;
+      setTotalQuestionsPlayed(prev => prev + 1);
+      
+      // If we're at the end of current batch, load more questions
+      if (nextQuestionIndex >= questions.length) {
+        await fetchNewQuestionsForInfinite();
+      } else {
+        setCurrentQuestion(nextQuestionIndex);
+      }
     } else {
-      // Handle end of questions
-      if (mode === 'infinite') {
-        fetchNewQuestionsForInfinite();
+      // For daily/multiplayer modes, check if we're at the end
+      if (currentQuestion < questions.length - 1) {
+        setCurrentQuestion(prev => prev + 1);
       } else {
         setGameComplete(true);
       }
     }
   };
 
-  // Fetch new questions for infinite mode
+  // UPDATED: Fetch new questions for infinite mode
   const fetchNewQuestionsForInfinite = async (): Promise<void> => {
+    setIsLoadingNewQuestions(true);
+    
     try {
+      // Get fresh random questions (no offset needed since we're using random function)
       const newQuestions = await fetchQuestions('infinite');
-      setQuestions(newQuestions);
-      setCurrentQuestion(0);
-    } catch (error) {
-      console.error('Failed to fetch new questions for infinite mode:', error);
-      if (questions.length > 0) {
+      
+      if (newQuestions.length > 0) {
+        setQuestions(newQuestions);
         setCurrentQuestion(0);
       } else {
+        // If no new questions available, end the game
         setGameComplete(true);
       }
+    } catch (error) {
+      console.error('Failed to fetch new questions for infinite mode:', error);
+      
+      // On error, try to continue with existing questions if available
+      if (questions.length > 0) {
+        // Restart from beginning if we have questions
+        setCurrentQuestion(0);
+      } else {
+        // End game if no questions available
+        setGameComplete(true);
+      }
+    } finally {
+      setIsLoadingNewQuestions(false);
     }
   };
 
@@ -250,8 +280,13 @@ const GamePage: React.FC = () => {
     router.push('/');
   };
 
+  // NEW: Handle user manually ending infinite game
+  const handleEndInfiniteGame = (): void => {
+    setGameComplete(true);
+  };
+
   // Render loading screen if Google Maps is not loaded or questions are loading
-  if ((!googleMapsLoaded && !apiKeyMissing) || questionsLoading) {
+  if ((!googleMapsLoaded && !apiKeyMissing) || questionsLoading || isLoadingNewQuestions) {
     return <LoadingScreen />;
   }
 
@@ -329,14 +364,26 @@ const GamePage: React.FC = () => {
   // MAIN GAME RENDERING - This is where GameQuestion gets rendered
   if (gameStarted && questions.length > 0 && currentQuestion < questions.length) {
     return (
-      <GameQuestion
-        question={questions[currentQuestion]}
-        currentQuestion={currentQuestion}
-        totalQuestions={questions.length}
-        score={score}
-        onAnswerSubmitted={handleAnswerSubmitted}
-        onNextRound={handleNextRound}
-      />
+      <>
+        <GameQuestion
+          question={questions[currentQuestion]}
+          currentQuestion={mode === 'infinite' ? totalQuestionsPlayed : currentQuestion}
+          totalQuestions={mode === 'infinite' ? 999 : questions.length} // Use high number for infinite
+          score={score}
+          onAnswerSubmitted={handleAnswerSubmitted}
+          onNextRound={handleNextRound}
+        />
+        
+        {/* NEW: Infinite mode exit button */}
+        {mode === 'infinite' && (
+          <button
+            onClick={handleEndInfiniteGame}
+            className="fixed top-4 right-4 z-20 bg-red-600/80 hover:bg-red-700 text-white px-4 py-2 rounded-lg backdrop-blur-sm transition-colors font-medium"
+          >
+            End Game
+          </button>
+        )}
+      </>
     );
   }
 
