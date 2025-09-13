@@ -11,6 +11,8 @@ export interface Question {
   time_period?: string;
   fun_fact?: string;
   created_at?: string;
+  image_url?: string | null;
+  image_alt: string;
 }
 
 export interface QuestionRequest {

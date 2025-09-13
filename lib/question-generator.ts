@@ -1,6 +1,12 @@
 import { LLMClient } from "./llm/llmClient";
 import { supabaseClient } from "./supabase/supabaseClient";
-import { Question, QuestionRequest } from "@/types/question";
+import { Question, QuestionRequest } from "../types/question";
+
+interface ImageSearchResult {
+  url: string;
+  source: string;
+  alt?: string;
+}
 
 export class QuestionGenerator {
   private llmClient: LLMClient;
@@ -32,9 +38,12 @@ export class QuestionGenerator {
         const questions = this.parseResponse(llmResponse);
 
         if (questions.length > 0) {
+          // Add image scraping for each question
+          const questionsWithImages = await this.addImagesToQuestions(questions);
+
           const { data, error } = await supabaseClient
             .from("questions")
-            .insert(questions as any)
+            .insert(questionsWithImages as any)
             .select();
 
           if (error) throw error;
@@ -43,7 +52,7 @@ export class QuestionGenerator {
           console.log(
             `✓ Batch ${i + 1}/${batches}: Generated ${
               data?.length || 0
-            } questions`
+            } questions with ${questionsWithImages.filter(q => q.image_url).length} images`
           );
         }
 
@@ -60,8 +69,108 @@ export class QuestionGenerator {
     return allQuestions;
   }
 
+  private async addImagesToQuestions(questions: Omit<Question, "id" | "created_at">[]): Promise<Omit<Question, "id" | "created_at">[]> {
+    const questionsWithImages = [];
+
+    for (const question of questions) {
+      try {
+        // Create search query from city and country
+        const searchQuery = `${question.answer_city} ${question.answer_country} landmark`;
+        const imageResult = await this.searchImage(searchQuery);
+        
+        // Generate meaningful alt text
+        const altText = this.generateImageAltText(question, imageResult);
+        
+        questionsWithImages.push({
+          ...question,
+          image_url: imageResult?.url || null,
+          image_alt: altText
+        });
+
+        // Rate limit image requests
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } catch (error) {
+        console.warn(`Failed to find image for ${question.answer_city}:`, error);
+        questionsWithImages.push({
+          ...question,
+          image_url: null,
+          image_alt: this.generateImageAltText(question, null)
+        });
+      }
+    }
+
+    return questionsWithImages;
+  }
+
+  private generateImageAltText(question: Omit<Question, "id" | "created_at">, imageResult: ImageSearchResult | null): string {
+    if (!imageResult) {
+      // Fallback alt text when no image is found
+      return 'no image found';
+    }
+
+    // Use Pixabay tags if available, otherwise generate descriptive text
+    if (imageResult.alt && imageResult.alt.trim()) {
+      const tags = imageResult.alt.split(',').map(tag => tag.trim());
+      const relevantTags = tags.slice(0, 4); // Use first 4 most relevant tags
+      return `${relevantTags.join(', ')}`;
+    }
+
+    // Generate contextual alt text based on category
+    const categoryDescriptors: { [key: string]: string } = {
+      'birth_places': 'birthplace and historical location',
+      'death_places': 'historical site and memorial location',
+      'invention_origins': 'birthplace of innovation and discovery site',
+      'sports_origins': 'sports heritage site and athletic venue',
+      'food_origins': 'culinary heritage location and cultural site',
+      'company_origins': 'business heritage site and corporate landmark',
+      'natural_extremes': 'natural wonder and extreme geographic location',
+      'architectural_firsts': 'architectural landmark and historical building',
+      'ancient_wonders': 'ancient archaeological site and historical wonder',
+      'wildcard_random': 'notable location and point of interest'
+    };
+
+    const descriptor = categoryDescriptors[question.category] || 'notable landmark and scenic location';
+    return `${descriptor}`;
+  }
+
+  private async searchImage(query: string): Promise<ImageSearchResult | null> {
+    const pixabayKey = process.env.PIXABAY_API_KEY;
+    
+    if (!pixabayKey) {
+      console.warn('No Pixabay API key found - skipping image search');
+      return null;
+    }
+
+    try {
+      const encodedQuery = encodeURIComponent(query);
+      const url = `https://pixabay.com/api/?key=${pixabayKey}&q=${encodedQuery}&image_type=photo&orientation=all&category=places&min_width=640&min_height=480&per_page=3&safesearch=true`;
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Pixabay API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.hits && data.hits.length > 0) {
+        const image = data.hits[0];
+        return {
+          url: image.webformatURL,
+          source: 'pixabay',
+          alt: image.tags // Pixabay provides comma-separated tags
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.warn(`Image search failed for "${query}":`, error);
+      return null;
+    }
+  }
+
   private buildEnhancedPrompt(request: QuestionRequest): string {
     return `Generate exactly ${request.count} fascinating trivia questions for a geographic guessing game that relate to ${request.category},
+**DO NOT MENTION THE CITY/REGION/COUNTRY IN THE QUESTION ITSELF, CONTINENT AT MOST. THIS GIVES THE ANSWER AWAY**
 
 🌍 THE POSSIBILITIES ARE ENDLESS! Think beyond cities, although cities are valid and promoted, need a good variety:
 - Remote locations (Nemo Point, most isolated spot on Earth)
@@ -134,7 +243,7 @@ Include questions from ALL continents, with major countries getting more represe
 ⚡ REQUIREMENTS:
 - Any pinpointable location with exact coordinates (lat/lng)
 - Rich storytelling with specific details, dates, numbers
-- **DO NOT MENTION THE CITY/REGION IN THE QUESTION ITSELF, CONTINENT AT MOST. THIS GIVES THE ANSWER AWAY**
+- **DO NOT MENTION THE CITY/REGION/COUNTRY IN THE QUESTION ITSELF, CONTINENT AT MOST. THIS GIVES THE ANSWER AWAY**
 - ie do not have "Where in Kenya is ..."
 - Educational and memorable
 - Global representation based on logical population splits

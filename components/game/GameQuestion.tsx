@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Clock, Target, Globe, Info, MapPin, Calendar, Star, ArrowRight } from 'lucide-react';
+import { Clock, Target, Globe, Info, MapPin, Calendar, Star, ArrowRight, Image as ImageIcon } from 'lucide-react';
 import { Question } from '../../types/question';
 import { Location, GameAnswer } from '../../types';
 import { haversineDistance, calculateScore } from '../../utils/gameUtils';
@@ -26,6 +26,8 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
   const [showAnswer, setShowAnswer] = useState<boolean>(false);
   const [timeLeft, setTimeLeft] = useState<number>(60);
   const [currentAnswer, setCurrentAnswer] = useState<GameAnswer | null>(null);
+  const [imageError, setImageError] = useState<boolean>(false);
+  const [imageExpanded, setImageExpanded] = useState<boolean>(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Wrap handleSubmitGuess in useCallback to prevent unnecessary re-renders
@@ -35,13 +37,11 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
     let distance: number | null = null;
     let questionScore = 0;
     
-    // Create correct coordinates from question data
     const correctCoordinates = {
       lat: Number(question.answer_lat),
       lng: Number(question.answer_lng)
     };
     
-    // Validate coordinates
     if (isNaN(correctCoordinates.lat) || isNaN(correctCoordinates.lng)) {
       console.error('Invalid coordinates in question:', question);
       return;
@@ -71,7 +71,6 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
       score: questionScore
     };
 
-    
     setCurrentAnswer(newAnswer);
     setShowAnswer(true);
     
@@ -79,13 +78,12 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
       onAnswerSubmitted(newAnswer);
     }, 0);
     
-    
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
-  }, [showAnswer, selectedLocation, question, onAnswerSubmitted, onNextRound]);
+  }, [showAnswer, selectedLocation, question, onAnswerSubmitted]);
 
-  // Timer effect - now includes handleSubmitGuess in dependency array
+  // Timer effect
   useEffect(() => {
     if (!showAnswer && timeLeft > 0) {
       timerRef.current = setTimeout(() => {
@@ -108,14 +106,16 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
         clearTimeout(timerRef.current);
       }
     };
-  }, [showAnswer, timeLeft, handleSubmitGuess]); // Added handleSubmitGuess dependency
+  }, [showAnswer, timeLeft, handleSubmitGuess]);
 
   // Reset state when question changes
   useEffect(() => {
     setSelectedLocation(null);
     setShowAnswer(false);
-    setTimeLeft(60); // Consistent 60 second timer
+    setTimeLeft(60);
     setCurrentAnswer(null);
+    setImageError(false);
+    setImageExpanded(false);
   }, [currentQuestion]);
 
   const handleLocationSelect = (location: Location): void => {
@@ -126,6 +126,14 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
 
   const handleNextRound = (): void => {
     onNextRound();
+  };
+
+  const handleImageError = (): void => {
+    setImageError(true);
+  };
+
+  const toggleImageExpanded = (): void => {
+    setImageExpanded(!imageExpanded);
   };
 
   const getScoreColor = (score: number): string => {
@@ -143,7 +151,6 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
     return 'text-red-400';
   };
 
-  // Helper functions for question display
   const getDifficultyColor = (difficulty: number) => {
     if (difficulty <= 3) return 'text-green-400';
     if (difficulty <= 6) return 'text-yellow-400';
@@ -154,20 +161,6 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
     if (difficulty <= 3) return 'Easy';
     if (difficulty <= 6) return 'Medium';
     return 'Hard';
-  };
-
-  const getCategoryColor = (category: string) => {
-    const colors: { [key: string]: string } = {
-      'Landmarks': 'text-purple-300 bg-purple-500/20',
-      'Architecture': 'text-blue-300 bg-blue-500/20',
-      'Ancient History': 'text-amber-300 bg-amber-500/20',
-      'Religious Monuments': 'text-rose-300 bg-rose-500/20',
-      'Religious Sites': 'text-rose-300 bg-rose-500/20',
-      'Archaeological Sites': 'text-orange-300 bg-orange-500/20',
-      'Ancient Civilizations': 'text-yellow-300 bg-yellow-500/20',
-      'National Monuments': 'text-green-300 bg-green-500/20',
-    };
-    return colors[category] || 'text-gray-300 bg-gray-500/20';
   };
 
   const formatDistance = (distance: number | null): string => {
@@ -187,14 +180,36 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
         isFullscreen={true}
       />
       
+      {/* Expanded Image Modal */}
+      {imageExpanded && question.image_url && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={toggleImageExpanded}
+        >
+          <div className="relative max-w-4xl max-h-full">
+            <img
+              src={question.image_url}
+              alt={question.image_alt || question.question}
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onError={handleImageError}
+            />
+            <button
+              onClick={toggleImageExpanded}
+              className="absolute top-4 right-4 bg-black/70 text-white p-2 rounded-full hover:bg-black/90 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+      
       {!showAnswer ? (
         <>
           {/* Timer - Center Top */}
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 rounded-xl shadow-2xl border border-white/10">
-            {/* Background with adjustable opacity */}
             <div className="absolute inset-0 bg-black/70 backdrop-blur-md rounded-xl"></div>
-            
-            {/* Content with full opacity */}
             <div className="relative px-6 py-3 text-white">
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-blue-400" />
@@ -205,12 +220,9 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
             </div>
           </div>
 
-          {/* Score and Round Card - Top Left */}
+          {/* Score and Round Card - Top Right */}
           <div className="absolute top-4 right-4 z-10 rounded-xl shadow-2xl border border-white/10">
-            {/* Background with adjustable opacity */}
             <div className="absolute inset-0 bg-black/70 backdrop-blur-md rounded-xl"></div>
-            
-            {/* Content with full opacity */}
             <div className="relative p-4 text-white">
               <div className="text-sm">
                 <span className="text-white/70">Round {currentQuestion + 1} of {totalQuestions}</span>
@@ -219,48 +231,66 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
             </div>
           </div>
 
-          {/* Question Card - Top Left (below score card) */}
+          {/* Question Card with Image - Top Left */}
           <div className="absolute top-4 left-4 z-10 rounded-xl shadow-2xl max-w-sm w-80 border border-white/10">
-            {/* Background with adjustable opacity */}
             <div className="absolute inset-0 bg-black/70 backdrop-blur-md rounded-xl"></div>
             
-            {/* Content with full opacity */}
-            <div className="relative p-4 text-white">
+            <div className="relative text-white overflow-hidden rounded-xl">
+              {/* Image Section */}
+              {question.image_url && !imageError && (
+                <div className="relative">
+                  <img
+                    src={question.image_url}
+                    alt={question.image_alt}
+                    className="w-full h-48 object-cover cursor-pointer hover:brightness-110 transition-all"
+                    onError={handleImageError}
+                    onClick={toggleImageExpanded}
+                  />
+                  
+                  {/* Image Expand Button */}
+                  <button
+                    onClick={toggleImageExpanded}
+                    className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-lg hover:bg-black/70 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+
               {/* Question Content */}
-              <div className="mb-4">
+              <div className="p-4">
                 <h2 className="text-lg font-bold mb-3 leading-tight">{question.question}</h2>
+
 
                 {/* Category and Difficulty Row */}
                 <div className="mb-3 flex items-center gap-2 text-xs flex-wrap">
-                  
                   <div className="bg-gray-500/20 px-2 py-1 rounded-md flex items-center gap-1">
                     <Target className="w-3 h-3" />
                     <span className={getDifficultyColor(question.difficulty)}>
                       {getDifficultyText(question.difficulty)} ({question.difficulty}/10)
                     </span>
                   </div>
-                </div> 
+                </div>
+                
+                {/* Submit Button */}
+                <button
+                  onClick={handleSubmitGuess}
+                  disabled={!selectedLocation}
+                  className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2 shadow-lg disabled:shadow-none"
+                >
+                  <Target className="w-4 h-4" />
+                  Submit Guess
+                </button>
               </div>
-              
-              {/* Submit Button */}
-              <button
-                onClick={handleSubmitGuess}
-                disabled={!selectedLocation}
-                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2 shadow-lg disabled:shadow-none"
-              >
-                <Target className="w-4 h-4" />
-                Submit Guess
-              </button>
             </div>
           </div>
 
-          {/* Fun Fact Card - Bottom Right (if available) */}
-          {question.fun_fact && (
+          {/* Fun Fact Card - Bottom Right (if available and no image or image failed) */}
+          {question.fun_fact && (!question.image_url || imageError) && (
             <div className="absolute bottom-4 right-4 z-10 rounded-xl shadow-2xl max-w-xs border border-yellow-500/20">
-              {/* Background with adjustable opacity */}
               <div className="absolute inset-0 bg-black/85 backdrop-blur-md rounded-xl"></div>
-              
-              {/* Content with full opacity */}
               <div className="relative p-4 text-white">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="text-lg">💡</div>
@@ -272,22 +302,17 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
           )}
         </>
       ) : (
-        /* Answer Screen */
+        /* Answer Screen - Same as before */
         <>
-          {/* Main Results Card - Bottom Center (now compact) */}
           <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-sm px-3">
             <div className="rounded-xl shadow-2xl border border-white/20">
-              {/* Background with adjustable opacity */}
               <div className="absolute inset-0 bg-black/90 backdrop-blur-md rounded-xl"></div>
-              
-              {/* Content with full opacity */}
               <div className="relative p-4 text-white">
                 <div className="text-center mb-3">
                   <h2 className="text-lg font-bold mb-0.5">Round {currentQuestion + 1} Complete!</h2>
                   <p className="text-white/70 text-xs">Here's how you did:</p>
                 </div>
 
-                {/* Score Display */}
                 <div className="text-center mb-3">
                   <div className="text-2xl font-bold mb-0.5">
                     <span className={getScoreColor(currentAnswer?.score || 0)}>
@@ -297,7 +322,6 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
                   <p className="text-white/70 text-xs">points earned this round</p>
                 </div>
 
-                {/* Distance and Location Info */}
                 <div className="grid grid-cols-2 gap-2 mb-3">
                   <div className="text-center p-2 bg-white/5 rounded-lg border border-white/10">
                     <div className="text-base font-bold mb-0.5">
@@ -316,7 +340,6 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
                   </div>
                 </div>
 
-                {/* Next Button */}
                 <button
                   onClick={handleNextRound}
                   className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium flex items-center justify-center gap-2 shadow-lg text-sm"
@@ -337,13 +360,10 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
             </div>
           </div>
 
-          {/* Separate Context Box - Bottom Right */}
+          {/* Context Box with Image Support */}
           <div className="fixed bottom-6 right-6 z-10 w-80 max-w-[calc(100vw-24rem)]">
             <div className="rounded-2xl shadow-2xl border border-white/20">
-              {/* Background with adjustable opacity */}
               <div className="absolute inset-0 bg-black/90 backdrop-blur-md rounded-2xl"></div>
-              
-              {/* Content with full opacity */}
               <div className="relative p-4 text-white">
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 mt-0.5">

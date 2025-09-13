@@ -204,22 +204,6 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
   return (
     <div className={`relative bg-blue-900 rounded-lg overflow-hidden border-2 border-white/20 ${isFullscreen ? 'h-full' : 'h-96'}`}>
       <div ref={mapRef} className="w-full h-full" />
- 
-      {showAnswer && selectedLocation && correctLocation && (
-        <div className="absolute bottom-4 left-4 bg-black/85 text-white px-4 py-3 rounded-lg text-sm backdrop-blur-sm border border-white/20">
-          <div className="flex items-center gap-2 mb-1">
-            <Navigation className="w-4 h-4 text-blue-400" />
-            <span className="font-medium">Distance:</span>
-          </div>
-          <div className="text-lg font-bold">
-            {formatDistanceDisplay(haversineDistance(
-              selectedLocation.lat, selectedLocation.lng,
-              correctLocation.lat, correctLocation.lng
-            ))}
-          </div>
-        </div>
-      )}
-
       {showAnswer && !selectedLocation && correctLocation && (
         <div className="absolute bottom-4 left-4 bg-black/85 text-white px-4 py-3 rounded-lg text-sm backdrop-blur-sm border border-white/20">
           <div className="flex items-center gap-2">

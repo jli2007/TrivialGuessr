@@ -1,4 +1,7 @@
 "use server";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 interface LLMResponse {
   choices: Array<{
