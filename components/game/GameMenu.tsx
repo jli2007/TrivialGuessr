@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
-import { io } from "socket.io-client";
-import { Calendar, Users, Crown, Play, UserPlus, Infinity } from "lucide-react";
+import io  from "socket.io-client";
+import { Calendar, User, Crown, Infinity } from "lucide-react";
 import { TypingAnimation } from "@/components/magicui/typing-animation";
 import { AnimatedGradientText } from "@/components/magicui/animated-gradient-text";
 import { LeaderboardEntry } from "@/types/leaderboard";
@@ -15,42 +15,23 @@ const socket = io("http://localhost:3001", {
 interface GameMenuProps {
   onStartDaily: () => void;
   onStartCasual: () => void;
+  onStartMultiplayer: () => void;
   dailyLeaderboard: LeaderboardEntry[];
 }
 
 const GameMenu: React.FC<GameMenuProps> = ({
   onStartDaily,
   onStartCasual,
+  onStartMultiplayer,
   dailyLeaderboard,
 }) => {
   const [isDailyHovered, setIsDailyHovered] = useState(false);
   const [isCasualHovered, setIsCasualHovered] = useState(false);
+  const [isMultiplayerHovered, setIsMultiplayerHovered] = useState(false);
   const [playerName, setPlayerName] = useState("");
   const [roomCode, setRoomCode] = useState("");
   const [roomData, setRoomData] = useState<any>(null);
 
-  // setup listeners
-  useEffect(() => {
-    socket.on("roomCreated", ({ roomId }) => {
-      setRoomCode(roomId);
-      console.log("✅ Room created:", roomId);
-    });
-
-    socket.on("roomData", (data) => {
-      setRoomData(data);
-      console.log("📡 Room data updated:", data);
-    });
-
-    socket.on("error", (message) => {
-      alert(message);
-    });
-
-    return () => {
-      socket.off("roomCreated");
-      socket.off("roomData");
-      socket.off("error");
-    };
-  }, []);
 
   // socket actions
   const handleCreateRoom = () => {
@@ -191,67 +172,28 @@ const GameMenu: React.FC<GameMenuProps> = ({
               "Casual Mode"
             )}
           </button>
-
-          {/* Multiplayer Section */}
-          <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-white/10 hover:border-secondary-400/30 transition-all duration-300">
-            <h3 className="text-white text-lg font-bold flex items-center gap-2 mb-4">
-              <div className="p-1.5 bg-secondary-500/20 rounded-lg">
-                <Users className="w-5 h-5 text-secondary-300" />
-              </div>
-              Multiplayer Mode
-            </h3>
-
-            <div className="space-y-3">
-              <input
-                type="text"
-                placeholder="Enter your name"
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-secondary-400/60 focus:outline-none focus:ring-2 focus:ring-secondary-400/20 transition-all duration-200 backdrop-blur-sm"
-              />
-
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Room Code"
-                  value={roomCode}
-                  onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                  className="flex-1 px-3 py-2.5 text-sm rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-primary-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 transition-all duration-200 backdrop-blur-sm"
-                />
-                <button
-                  onClick={handleJoinRoom}
-                  disabled={!playerName.trim() || !roomCode.trim()}
-                  className="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-primary hover:shadow-lg hover:scale-105 flex items-center gap-1 text-sm"
-                >
-                  <Play className="w-3 h-3" />
-                  Join
-                </button>
-              </div>
-
-              <button
-                onClick={handleCreateRoom}
-                disabled={!playerName.trim()}
-                className="w-full py-3 bg-secondary-500 hover:bg-secondary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-secondary hover:shadow-lg hover:scale-105 flex items-center justify-center gap-2 text-sm"
+          {/* Multiplayer Button */}
+          <button
+            onClick={onStartMultiplayer}
+            onMouseEnter={() => setIsMultiplayerHovered(true)}
+            onMouseLeave={() => setIsMultiplayerHovered(false)}
+            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"
+          >
+            <div className="p-1.5 bg-black/10 rounded-lg">
+              <User className="w-5 h-5" />
+            </div>
+            {isMultiplayerHovered ? (
+              <TypingAnimation
+                className="text-lg font-bold text-gray-900 inline"
+                startOnView={true}
+                delay={50}
               >
-                <UserPlus className="w-4 h-4" />
-                Create Room
-              </button>
-            </div>
-          </div>
-
-          {/* Show active room data */}
-          {roomData && (
-            <div className="bg-black/40 backdrop-blur-xl mt-4 p-4 rounded-xl text-white">
-              <h4 className="font-bold mb-2">Room {roomCode}</h4>
-              <ul className="space-y-1">
-                {roomData.players.map((p: any) => (
-                  <li key={p.id}>
-                    {p.name} {p.isHost && "👑"} - {p.score}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+                Multiplayer Mode
+              </TypingAnimation>
+            ) : (
+              "Multiplayer Mode"
+            )}
+          </button>
         </div>
       </div>
 

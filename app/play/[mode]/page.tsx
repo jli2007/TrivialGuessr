@@ -1,15 +1,15 @@
 "use client"
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Users, Play, UserPlus} from "lucide-react";
 import { useRouter, useParams } from 'next/navigation';
 import { GameAnswer, Player} from '@typesFolder/index';
 import {Question} from '@typesFolder/question';
 import { generateRoomCode, loadGoogleMapsScript } from '@utils/gameUtils';
-import GameLobby from '@components/game/GameLobby';
 import GameQuestion from '@components/game/GameQuestion';
 import GameResult from '@components/game/GameResult';
 import LoadingScreen from '@components/LoadingScreen';
-import io from "socket.io-client";
+import io, { Socket } from "socket.io-client";
 
 const SOCKET_SERVER_URL = "http://localhost:3001";
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
@@ -18,6 +18,7 @@ const GamePage: React.FC = () => {
   const router = useRouter();
   const params = useParams();
   const mode = params?.mode as string;
+  const socketRef = useRef<typeof Socket | null>(null);
 
   // Game state
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
@@ -41,73 +42,114 @@ const GamePage: React.FC = () => {
   const [roomCode, setRoomCode] = useState("");
   const [isHost, setIsHost] = useState(false);
   const [roomPlayers, setRoomPlayers] = useState<Player[]>([]);
-  const [showLobby, setShowLobby] = useState(false);
+  const [roomData, setRoomData] = useState<any>(null);
+  const [isConnected, setIsConnected] = useState(false);
 
-  const socketRef = useRef<any>(null);
-
-  // Define callback functions before useEffect
-  const onRoomJoined = useCallback((roomId: string, players: Player[], hostStatus: boolean) => {
-    setRoomCode(roomId);
-    setRoomPlayers(players);
-    setIsHost(hostStatus);
-    setShowLobby(true);
-  }, []);
-
-  const createMultiplayerRoom = useCallback(() => {
-    if (!playerName.trim()) {
-      alert("Please enter your name first");
-      return;
-    }
-    socketRef.current?.emit("createRoom", { userName: playerName });
-  }, [playerName]);
-
-  const joinMultiplayerRoom = useCallback(() => {
-    if (!playerName.trim() || !roomCode.trim()) {
-      alert("Please enter both your name and room code");
-      return;
-    }
-    socketRef.current?.emit("joinRoom", {
-      roomId: roomCode.toUpperCase(),
-      userName: playerName,
-    });
-  }, [playerName, roomCode]);
-
-  // Socket setup
+  // Initialize socket connection
   useEffect(() => {
     if (mode !== 'multiplayer') return;
 
-    // Connect socket
-    socketRef.current = io(SOCKET_SERVER_URL);
+    // Create socket connection if it doesn't exist
+    if (!socketRef.current) {
+      socketRef.current = io("http://localhost:3001", {
+        transports: ["websocket"],
+        autoConnect: true,
+      });
 
-    // Handle room created response from server
-    socketRef.current.on("roomCreated", (data: { roomId: string }) => {
-      console.log("Room created:", data);
-      // We'll get the room data separately
-    });
+      // Connection status listeners
+      socketRef.current.on("connect", () => {
+        console.log("✅ Connected to server");
+        setIsConnected(true);
+      });
 
-    // Handle room data updates
-    socketRef.current.on("roomData", (room: { players: Player[] }) => {
-      console.log("Room data received:", room);
-      setRoomPlayers(room.players);
-      
-      // Check if this is the first time receiving room data after creating/joining
-      if (!showLobby) {
-        const currentPlayer = room.players.find(p => p.name === playerName);
-        setIsHost(currentPlayer?.isHost || false);
-        setShowLobby(true);
-      }
-    });
-
-    // Handle errors
-    socketRef.current.on("error", (message: string) => {
-      console.error("Socket error:", message);
-      alert(message);
-    });
+      socketRef.current.on("disconnect", () => {
+        console.log("❌ Disconnected from server");
+        setIsConnected(false);
+      });
+    }
 
     return () => {
-      socketRef.current?.disconnect();
+      // Don't disconnect here, we'll do it in cleanup
     };
-  }, [mode, playerName, showLobby]);
+  }, [mode]);
+
+  // Setup socket listeners
+  useEffect(() => {
+    if (mode !== 'multiplayer' || !socketRef.current) return;
+
+    const socket = socketRef.current;
+
+    // Handle room created response from server
+    const handleRoomCreated = ({ roomId }: { roomId: string }) => {
+      setRoomCode(roomId);
+      console.log("✅ Room created:", roomId);
+    };
+
+    // Handle room data updates
+    const handleRoomData = (data: any) => {
+      setRoomData(data);
+      setRoomPlayers(data.players || []);
+      console.log("📡 Room data updated:", data);
+      
+      // Check if this is the first time receiving room data after creating/joining
+      const currentPlayer = data.players?.find((p: any) => p.name === playerName);
+      setIsHost(currentPlayer?.isHost || false);
+    };
+
+    // Handle player joined notifications
+    const handlePlayerJoined = ({ playerName: joinedPlayerName, playerId }: { playerName: string; playerId: string }) => {
+      console.log(`🎮 Player joined: ${joinedPlayerName}`);
+    };
+
+    // Handle player left notifications
+    const handlePlayerLeft = ({ playerName: leftPlayerName, playerId }: { playerName: string; playerId: string }) => {
+      console.log(`👋 Player left: ${leftPlayerName}`);
+    };
+
+    // Handle game started
+    const handleGameStarted = ({ roomId }: { roomId: string }) => {
+      console.log(`🎯 Game started in room: ${roomId}`);
+    };
+
+    // Handle errors
+    const handleError = (message: string) => {
+      console.error("Socket error:", message);
+      alert(message);
+    };
+
+    // Add event listeners
+    socket.on("roomCreated", handleRoomCreated);
+    socket.on("roomData", handleRoomData);
+    socket.on("playerJoined", handlePlayerJoined);
+    socket.on("playerLeft", handlePlayerLeft);
+    socket.on("gameStarted", handleGameStarted);
+    socket.on("error", handleError);
+
+    // Cleanup listeners
+    return () => {
+      socket.off("roomCreated", handleRoomCreated);
+      socket.off("roomData", handleRoomData);
+      socket.off("playerJoined", handlePlayerJoined);
+      socket.off("playerLeft", handlePlayerLeft);
+      socket.off("gameStarted", handleGameStarted);
+      socket.off("error", handleError);
+    };
+  }, [mode, playerName]);
+
+  // Socket actions
+  const handleCreateRoom = () => {
+    if (!playerName.trim() || !socketRef.current) return;
+    
+    console.log(`Creating room with player name: ${playerName}`);
+    socketRef.current.emit("createRoom", { userName: playerName });
+  };
+
+  const handleJoinRoom = () => {
+    if (!playerName.trim() || !roomCode.trim() || !socketRef.current) return;
+    
+    console.log(`Joining room ${roomCode} with player name: ${playerName}`);
+    socketRef.current.emit("joinRoom", { roomId: roomCode, userName: playerName });
+  };
 
   // Redirect invalid modes
   useEffect(() => {
@@ -216,7 +258,7 @@ const GamePage: React.FC = () => {
     if (mode === 'daily' || mode === 'casual') {
       initializeGame();
     }
-    // For multiplayer, we wait for the lobby
+    // For multiplayer, we wait for room setup
   }, [googleMapsLoaded, mode]);
 
   // Initialize game with question fetching
@@ -245,7 +287,6 @@ const GamePage: React.FC = () => {
       const fetchedQuestions = await fetchQuestions('multiplayer');
       setQuestions(fetchedQuestions);
       startGame();
-      setShowLobby(false); // Hide lobby when game starts
     } catch (error) {
       console.error('Failed to start multiplayer game:', error);
       startGame();
@@ -269,12 +310,18 @@ const GamePage: React.FC = () => {
 
   const handleGameEnd = (): void => {
     // Clean up socket connection
-    socketRef.current?.disconnect();
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
     router.push('/');
   };
 
   const handleLeaveRoom = (): void => {
-    socketRef.current?.disconnect();
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
     router.push('/');
   };
 
@@ -286,6 +333,15 @@ const GamePage: React.FC = () => {
     
     if (nameFromUrl) setPlayerName(nameFromUrl);
     if (codeFromUrl) setRoomCode(codeFromUrl);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
   }, []);
 
   // Render loading screen if Google Maps is not loaded or questions are loading
@@ -378,68 +434,98 @@ const GamePage: React.FC = () => {
     );
   }
 
-  // Show lobby for multiplayer mode
-  if (mode === 'multiplayer' && showLobby && !gameStarted) {
+  // Multiplayer setup screen
+  if (mode === 'multiplayer') {
     return (
-      <GameLobby
-        roomCode={roomCode}
-        roomPlayers={roomPlayers}
-        isHost={isHost}
-        onStartGame={startMultiplayerGame}
-        onLeaveRoom={handleLeaveRoom}
-      />
-    );
-  }
+      <div className="space-y-4">
+        <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-white/10 hover:border-secondary-400/30 transition-all duration-300">
+          <h3 className="text-white text-lg font-bold flex items-center gap-2 mb-4">
+            <div className="p-1.5 bg-secondary-500/20 rounded-lg">
+              <Users className="w-5 h-5 text-secondary-300" />
+            </div>
+            Multiplayer Mode
+            {!isConnected && (
+              <span className="text-yellow-400 text-sm">(Connecting...)</span>
+            )}
+            {isConnected && (
+              <span className="text-green-400 text-sm">(Connected)</span>
+            )}
+          </h3>
 
-  // Show multiplayer setup screen
-  if (mode === 'multiplayer' && !showLobby) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-black/20 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/10">
-          <h2 className="text-white text-2xl font-bold text-center mb-6">Multiplayer Setup</h2>
-          
-          <div className="space-y-4">
+          <div className="space-y-3">
             <input
               type="text"
               placeholder="Enter your name"
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-secondary-400/60 focus:outline-none focus:ring-2 focus:ring-secondary-400/20 transition-all duration-200"
+              className="w-full px-3 py-2.5 text-sm rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-secondary-400/60 focus:outline-none focus:ring-2 focus:ring-secondary-400/20 transition-all duration-200 backdrop-blur-sm"
             />
 
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="Room Code (optional)"
+                placeholder="Room Code"
                 value={roomCode}
                 onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                className="flex-1 px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-primary-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 transition-all duration-200"
+                className="flex-1 px-3 py-2.5 text-sm rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-primary-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 transition-all duration-200 backdrop-blur-sm"
               />
               <button
-                onClick={joinMultiplayerRoom}
-                disabled={!playerName.trim() || !roomCode.trim()}
-                className="px-6 py-3 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold"
+                onClick={handleJoinRoom}
+                disabled={!playerName.trim() || !roomCode.trim() || !isConnected}
+                className="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-primary hover:shadow-lg hover:scale-105 flex items-center gap-1 text-sm"
               >
+                <Play className="w-3 h-3" />
                 Join
               </button>
             </div>
 
             <button
-              onClick={createMultiplayerRoom}
-              disabled={!playerName.trim()}
-              className="w-full py-3 bg-secondary-500 hover:bg-secondary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold"
+              onClick={handleCreateRoom}
+              disabled={!playerName.trim() || !isConnected}
+              className="w-full py-3 bg-secondary-500 hover:bg-secondary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-secondary hover:shadow-lg hover:scale-105 flex items-center justify-center gap-2 text-sm"
             >
+              <UserPlus className="w-4 h-4" />
               Create Room
             </button>
 
-            <button
-              onClick={handleGameEnd}
-              className="w-full py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl transition-all duration-200 font-semibold"
-            >
-              Back to Menu
-            </button>
+            {roomData && isHost && (
+              <button
+                onClick={startMultiplayerGame}
+                className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-all duration-200 font-semibold shadow-lg hover:scale-105 flex items-center justify-center gap-2 text-sm"
+              >
+                <Play className="w-4 h-4" />
+                Start Game
+              </button>
+            )}
           </div>
         </div>
+
+        {roomData && (
+          <div className="bg-black/10 backdrop-blur-xl rounded-2xl p-4 border border-white/10">
+            <h4 className="text-white font-bold mb-2 flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Room {roomCode} ({roomPlayers.length} player{roomPlayers.length !== 1 ? 's' : ''})
+            </h4>
+            <div className="space-y-2">
+              {roomPlayers.map((player: any) => (
+                <div key={player.id} className="flex items-center justify-between bg-white/5 rounded-lg p-2">
+                  <span className="text-white/90 flex items-center gap-2">
+                    {player.name} 
+                    {player.isHost && <span className="text-yellow-400">👑</span>}
+                    {player.name === playerName && <span className="text-blue-400">(You)</span>}
+                  </span>
+                  <span className="text-white/70 text-sm">Score: {player.score}</span>
+                </div>
+              ))}
+            </div>
+            
+            {roomPlayers.length > 1 && !isHost && (
+              <div className="mt-3 text-center text-white/60 text-sm">
+                Waiting for host to start the game...
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }

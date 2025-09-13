@@ -7,9 +7,6 @@ import { LeaderboardEntry } from "@/types/leaderboard";
 
 const HomePage: React.FC = () => {
   const router = useRouter();
-
-  const [playerName, setPlayerName] = useState<string>("");
-  const [roomCode, setRoomCode] = useState<string>("");
   const [dailyLeaderboard, setDailyLeaderboard] = useState<LeaderboardEntry[]>([]);
 
   useEffect(() => {
@@ -45,46 +42,16 @@ const HomePage: React.FC = () => {
     router.push("/play/casual");
   };
 
-  const handleCreateRoom = (): void => {
-    if (!playerName.trim()) {
-      alert("Please enter your name first");
-      return;
-    }
-    
-    // Navigate to multiplayer page with player name
-    const params = new URLSearchParams({ playerName: playerName.trim() });
-    router.push(`/play/multiplayer?${params.toString()}`);
+  const handleStartMultiplayer = (): void => {
+    router.push("/play/multiplayer");
   };
 
-  const handleJoinRoom = (): void => {
-    if (!playerName.trim()) {
-      alert("Please enter your name first");
-      return;
-    }
-    
-    if (!roomCode.trim()) {
-      alert("Please enter a room code");
-      return;
-    }
-    
-    // Navigate to multiplayer page with player name and room code
-    const params = new URLSearchParams({ 
-      playerName: playerName.trim(), 
-      roomCode: roomCode.trim().toUpperCase() 
-    });
-    router.push(`/play/multiplayer?${params.toString()}`);
-  };
 
   return (
     <GameMenu
       onStartDaily={handleStartDaily}
       onStartCasual={handleStartCasual}
-      onCreateRoom={handleCreateRoom}
-      onJoinRoom={handleJoinRoom}
-      playerName={playerName}
-      setPlayerName={setPlayerName}
-      roomCode={roomCode}
-      setRoomCode={setRoomCode}
+      onStartMultiplayer={handleStartMultiplayer}
       dailyLeaderboard={dailyLeaderboard}
     />
   );
