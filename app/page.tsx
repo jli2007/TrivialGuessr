@@ -14,21 +14,24 @@ const HomePage: React.FC = () => {
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
-      const response = await fetch(
-        "/api/daily_leaderboard?action=leaderboard&limit=10&orderBy=total_score"
-      );
-      const data = await response.json();
+      try {
+        const response = await fetch(
+          "/api/daily_leaderboard?action=leaderboard&limit=10&orderBy=total_score"
+        );
+        const data = await response.json();
 
-      // Map to match Player type expected by GameMenu
-      const mappedData = data.map((entry: any, index: number) => ({
-        id: entry.id,
-        player_name: entry.player_name,
-        total_score: entry.total_score,
-        time_created: entry.time_created,
-        rank: index + 1,
-      }));
+        const mappedData = data.map((entry: any, index: number) => ({
+          id: entry.id,
+          player_name: entry.player_name,
+          total_score: entry.total_score,
+          time_created: entry.time_created,
+          rank: index + 1,
+        }));
 
-      setDailyLeaderboard(mappedData);
+        setDailyLeaderboard(mappedData);
+      } catch (error) {
+        console.error("Failed to fetch leaderboard:", error);
+      }
     };
 
     fetchLeaderboard();
@@ -38,16 +41,38 @@ const HomePage: React.FC = () => {
     router.push("/play/daily");
   };
 
+  const handleStartCasual = (): void => {
+    router.push("/play/casual");
+  };
+
   const handleCreateRoom = (): void => {
-    router.push("/play/multiplayer");
+    if (!playerName.trim()) {
+      alert("Please enter your name first");
+      return;
+    }
+    
+    // Navigate to multiplayer page with player name
+    const params = new URLSearchParams({ playerName: playerName.trim() });
+    router.push(`/play/multiplayer?${params.toString()}`);
   };
 
   const handleJoinRoom = (): void => {
-    router.push("/play/multiplayer");
-  };
-
-  const handleStartCasual = () => {
-    router.push("/play/casual");
+    if (!playerName.trim()) {
+      alert("Please enter your name first");
+      return;
+    }
+    
+    if (!roomCode.trim()) {
+      alert("Please enter a room code");
+      return;
+    }
+    
+    // Navigate to multiplayer page with player name and room code
+    const params = new URLSearchParams({ 
+      playerName: playerName.trim(), 
+      roomCode: roomCode.trim().toUpperCase() 
+    });
+    router.push(`/play/multiplayer?${params.toString()}`);
   };
 
   return (

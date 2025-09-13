@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { GameAnswer, Player} from '@typesFolder/index';
 import {Question} from '@typesFolder/question';
@@ -9,8 +9,9 @@ import GameLobby from '@components/game/GameLobby';
 import GameQuestion from '@components/game/GameQuestion';
 import GameResult from '@components/game/GameResult';
 import LoadingScreen from '@components/LoadingScreen';
+import io from "socket.io-client";
 
-// Use your API key implementation
+const SOCKET_SERVER_URL = "http://localhost:3001";
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
 const GamePage: React.FC = () => {
@@ -30,16 +31,83 @@ const GamePage: React.FC = () => {
   const [questionsLoading, setQuestionsLoading] = useState<boolean>(false);
   const [questionsError, setQuestionsError] = useState<string | null>(null);
   
-  // Multiplayer state
-  const [roomCode, setRoomCode] = useState<string>('');
-  const [playerName, setPlayerName] = useState<string>('');
-  const [isHost, setIsHost] = useState<boolean>(false);
-  const [roomPlayers, setRoomPlayers] = useState<Player[]>([]);
-  
   // UI state
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState<boolean>(false);
   const [apiKeyMissing, setApiKeyMissing] = useState<boolean>(false);
   const [mapsLoadAttempted, setMapsLoadAttempted] = useState<boolean>(false);
+
+  // Multiplayer state
+  const [playerName, setPlayerName] = useState("");
+  const [roomCode, setRoomCode] = useState("");
+  const [isHost, setIsHost] = useState(false);
+  const [roomPlayers, setRoomPlayers] = useState<Player[]>([]);
+  const [showLobby, setShowLobby] = useState(false);
+
+  const socketRef = useRef<any>(null);
+
+  // Define callback functions before useEffect
+  const onRoomJoined = useCallback((roomId: string, players: Player[], hostStatus: boolean) => {
+    setRoomCode(roomId);
+    setRoomPlayers(players);
+    setIsHost(hostStatus);
+    setShowLobby(true);
+  }, []);
+
+  const createMultiplayerRoom = useCallback(() => {
+    if (!playerName.trim()) {
+      alert("Please enter your name first");
+      return;
+    }
+    socketRef.current?.emit("createRoom", { userName: playerName });
+  }, [playerName]);
+
+  const joinMultiplayerRoom = useCallback(() => {
+    if (!playerName.trim() || !roomCode.trim()) {
+      alert("Please enter both your name and room code");
+      return;
+    }
+    socketRef.current?.emit("joinRoom", {
+      roomId: roomCode.toUpperCase(),
+      userName: playerName,
+    });
+  }, [playerName, roomCode]);
+
+  // Socket setup
+  useEffect(() => {
+    if (mode !== 'multiplayer') return;
+
+    // Connect socket
+    socketRef.current = io(SOCKET_SERVER_URL);
+
+    // Handle room created response from server
+    socketRef.current.on("roomCreated", (data: { roomId: string }) => {
+      console.log("Room created:", data);
+      // We'll get the room data separately
+    });
+
+    // Handle room data updates
+    socketRef.current.on("roomData", (room: { players: Player[] }) => {
+      console.log("Room data received:", room);
+      setRoomPlayers(room.players);
+      
+      // Check if this is the first time receiving room data after creating/joining
+      if (!showLobby) {
+        const currentPlayer = room.players.find(p => p.name === playerName);
+        setIsHost(currentPlayer?.isHost || false);
+        setShowLobby(true);
+      }
+    });
+
+    // Handle errors
+    socketRef.current.on("error", (message: string) => {
+      console.error("Socket error:", message);
+      alert(message);
+    });
+
+    return () => {
+      socketRef.current?.disconnect();
+    };
+  }, [mode, playerName, showLobby]);
 
   // Redirect invalid modes
   useEffect(() => {
@@ -49,27 +117,23 @@ const GamePage: React.FC = () => {
     }
   }, [mode, router]);
 
-  // Load Google Maps API - FIXED VERSION
+  // Load Google Maps API
   useEffect(() => {
-    // Prevent multiple loading attempts
     if (mapsLoadAttempted) return;
 
     const loadMapsAPI = async () => {
       setMapsLoadAttempted(true);
 
-      // Check if Google Maps is already loaded
       if (typeof window !== 'undefined' && window.google?.maps) {
         console.log('Google Maps already loaded');
         setGoogleMapsLoaded(true);
         return;
       }
 
-      // Check if script is already being loaded
       const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
       if (existingScript) {
         console.log('Google Maps script already exists, waiting for load...');
         
-        // Wait for existing script to load
         existingScript.addEventListener('load', () => {
           setGoogleMapsLoaded(true);
         });
@@ -81,7 +145,6 @@ const GamePage: React.FC = () => {
         return;
       }
 
-      // Load the script for the first time
       try {
         await loadGoogleMapsScript(GOOGLE_MAPS_API_KEY);
         setGoogleMapsLoaded(true);
@@ -92,7 +155,7 @@ const GamePage: React.FC = () => {
     };
 
     loadMapsAPI();
-  }, []); // Remove dependencies to prevent re-runs
+  }, []);
 
   // Server integration function
   const fetchQuestions = async (gameMode: string, offset: number = 0): Promise<Question[]> => {
@@ -107,7 +170,6 @@ const GamePage: React.FC = () => {
           endpoint = '/api/daily_challenge?action=all';
           break;
         case 'casual':
-          // For casual mode, get random questions from questions table
           endpoint = `/api/questions?action=random&limit=10&offset=${offset}`;
           break;
         case 'multiplayer':
@@ -149,15 +211,12 @@ const GamePage: React.FC = () => {
 
   // Initialize game based on mode
   useEffect(() => {
-    if (googleMapsLoaded && !mapsLoadAttempted) return; // Wait for maps to be fully loaded
+    if (!googleMapsLoaded) return;
     
-    if (googleMapsLoaded) {
-      if (mode === 'daily' || mode === 'casual') {
-        initializeGame();
-      } else if (mode === 'multiplayer') {
-        setGameStarted(false);
-      }
+    if (mode === 'daily' || mode === 'casual') {
+      initializeGame();
     }
+    // For multiplayer, we wait for the lobby
   }, [googleMapsLoaded, mode]);
 
   // Initialize game with question fetching
@@ -181,29 +240,12 @@ const GamePage: React.FC = () => {
     setGameStarted(true);
   };
 
-  const createRoom = (): void => {
-    if (playerName.trim()) {
-      const code = generateRoomCode();
-      setRoomCode(code);
-      setIsHost(true);
-      setRoomPlayers([{ name: playerName, score: 0, isHost: true }]);
-    }
-  };
-
-  const joinRoom = (): void => {
-    if (playerName.trim() && roomCode.trim()) {
-      setRoomPlayers([
-        { name: "Host Player", score: 0, isHost: true },
-        { name: playerName, score: 0, isHost: false }
-      ]);
-    }
-  };
-
   const startMultiplayerGame = async (): Promise<void> => {
     try {
       const fetchedQuestions = await fetchQuestions('multiplayer');
       setQuestions(fetchedQuestions);
       startGame();
+      setShowLobby(false); // Hide lobby when game starts
     } catch (error) {
       console.error('Failed to start multiplayer game:', error);
       startGame();
@@ -216,21 +258,35 @@ const GamePage: React.FC = () => {
     setScore(prev => prev + answer.score);
   };
 
-  // UPDATED: Handle moving to next round from GameQuestion
+  // Handle moving to next round from GameQuestion
   const handleNextRound = async (): Promise<void> => {
-
-  
-      if (currentQuestion < questions.length - 1) {
-        setCurrentQuestion(prev => prev + 1);
-      } else {
-        setGameComplete(true);
-      }
-    
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(prev => prev + 1);
+    } else {
+      setGameComplete(true);
+    }
   };
 
   const handleGameEnd = (): void => {
+    // Clean up socket connection
+    socketRef.current?.disconnect();
     router.push('/');
   };
+
+  const handleLeaveRoom = (): void => {
+    socketRef.current?.disconnect();
+    router.push('/');
+  };
+
+  // Get player name from URL params if coming from home page
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const nameFromUrl = urlParams.get('playerName');
+    const codeFromUrl = urlParams.get('roomCode');
+    
+    if (nameFromUrl) setPlayerName(nameFromUrl);
+    if (codeFromUrl) setRoomCode(codeFromUrl);
+  }, []);
 
   // Render loading screen if Google Maps is not loaded or questions are loading
   if ((!googleMapsLoaded && !apiKeyMissing) || questionsLoading) {
@@ -268,7 +324,7 @@ const GamePage: React.FC = () => {
   }
 
   // Render questions error if needed
-  if (questionsError && questions.length === 0) {
+  if (questionsError && questions.length === 0 && mode !== 'multiplayer') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4">
         <div className="max-w-2xl w-full bg-white/10 backdrop-blur-md rounded-xl p-8 text-center">
@@ -308,93 +364,83 @@ const GamePage: React.FC = () => {
     );
   }
 
-  // MAIN GAME RENDERING - This is where GameQuestion gets rendered
+  // MAIN GAME RENDERING
   if (gameStarted && questions.length > 0 && currentQuestion < questions.length) {
     return (
-      <>
-        <GameQuestion
-          question={questions[currentQuestion]}
-          currentQuestion={currentQuestion}
-          totalQuestions={mode === 'casual' ? 10 : questions.length}
-          score={score}
-          onAnswerSubmitted={handleAnswerSubmitted}
-          onNextRound={handleNextRound}
-        />
-      </>
+      <GameQuestion
+        question={questions[currentQuestion]}
+        currentQuestion={currentQuestion}
+        totalQuestions={mode === 'casual' ? 10 : questions.length}
+        score={score}
+        onAnswerSubmitted={handleAnswerSubmitted}
+        onNextRound={handleNextRound}
+      />
     );
   }
 
-  // Render multiplayer lobby setup if not started
-  if (mode === 'multiplayer' && !gameStarted && roomPlayers.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white/10 backdrop-blur-md rounded-xl p-8">
-          <h2 className="text-3xl font-bold text-white mb-8 text-center">Join Multiplayer Game</h2>
-          
-          <div className="space-y-6">
-            <div>
-              <label className="block text-white/90 mb-2 font-medium">Your Name</label>
-              <input
-                type="text"
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                placeholder="Enter your name"
-                className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <label className="block text-white/90 mb-2 font-medium">Room Code</label>
-                <input
-                  type="text"
-                  value={roomCode}
-                  onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                  placeholder="Enter room code"
-                  className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            
-            <div className="flex gap-4">
-              <button
-                onClick={createRoom}
-                disabled={!playerName.trim()}
-                className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-              >
-                Create Room
-              </button>
-              <button
-                onClick={joinRoom}
-                disabled={!playerName.trim() || !roomCode.trim()}
-                className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-              >
-                Join Room
-              </button>
-            </div>
-            
-            <button
-              onClick={handleGameEnd}
-              className="w-full bg-white/10 text-white py-3 px-6 rounded-lg hover:bg-white/20 transition-colors font-medium"
-            >
-              Back to Menu
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show lobby if we have room setup
-  if (mode === 'multiplayer' && roomPlayers.length > 0 && !gameStarted) {
+  // Show lobby for multiplayer mode
+  if (mode === 'multiplayer' && showLobby && !gameStarted) {
     return (
       <GameLobby
         roomCode={roomCode}
         roomPlayers={roomPlayers}
         isHost={isHost}
         onStartGame={startMultiplayerGame}
-        onLeaveRoom={handleGameEnd}
+        onLeaveRoom={handleLeaveRoom}
       />
+    );
+  }
+
+  // Show multiplayer setup screen
+  if (mode === 'multiplayer' && !showLobby) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-black/20 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/10">
+          <h2 className="text-white text-2xl font-bold text-center mb-6">Multiplayer Setup</h2>
+          
+          <div className="space-y-4">
+            <input
+              type="text"
+              placeholder="Enter your name"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-secondary-400/60 focus:outline-none focus:ring-2 focus:ring-secondary-400/20 transition-all duration-200"
+            />
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Room Code (optional)"
+                value={roomCode}
+                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                className="flex-1 px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-primary-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 transition-all duration-200"
+              />
+              <button
+                onClick={joinMultiplayerRoom}
+                disabled={!playerName.trim() || !roomCode.trim()}
+                className="px-6 py-3 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold"
+              >
+                Join
+              </button>
+            </div>
+
+            <button
+              onClick={createMultiplayerRoom}
+              disabled={!playerName.trim()}
+              className="w-full py-3 bg-secondary-500 hover:bg-secondary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold"
+            >
+              Create Room
+            </button>
+
+            <button
+              onClick={handleGameEnd}
+              className="w-full py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl transition-all duration-200 font-semibold"
+            >
+              Back to Menu
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 

@@ -1,35 +1,67 @@
-// components/GameMenu.tsx
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
+import { io } from "socket.io-client";
 import { Calendar, Users, Crown, Play, UserPlus, Infinity } from "lucide-react";
 import { TypingAnimation } from "@/components/magicui/typing-animation";
 import { AnimatedGradientText } from "@/components/magicui/animated-gradient-text";
 import { LeaderboardEntry } from "@/types/leaderboard";
 
+// connect to your backend Socket.IO server
+const socket = io("http://localhost:3001", {
+  transports: ["websocket"],
+  autoConnect: true,
+});
+
 interface GameMenuProps {
   onStartDaily: () => void;
   onStartCasual: () => void;
-  onCreateRoom: () => void;
-  onJoinRoom: () => void;
-  playerName: string;
-  setPlayerName: (name: string) => void;
-  roomCode: string;
-  setRoomCode: (code: string) => void;
   dailyLeaderboard: LeaderboardEntry[];
 }
 
 const GameMenu: React.FC<GameMenuProps> = ({
   onStartDaily,
   onStartCasual,
-  onCreateRoom,
-  onJoinRoom,
-  playerName,
-  setPlayerName,
-  roomCode,
-  setRoomCode,
   dailyLeaderboard,
 }) => {
   const [isDailyHovered, setIsDailyHovered] = useState(false);
   const [isCasualHovered, setIsCasualHovered] = useState(false);
+  const [playerName, setPlayerName] = useState("");
+  const [roomCode, setRoomCode] = useState("");
+  const [roomData, setRoomData] = useState<any>(null);
+
+  // setup listeners
+  useEffect(() => {
+    socket.on("roomCreated", ({ roomId }) => {
+      setRoomCode(roomId);
+      console.log("✅ Room created:", roomId);
+    });
+
+    socket.on("roomData", (data) => {
+      setRoomData(data);
+      console.log("📡 Room data updated:", data);
+    });
+
+    socket.on("error", (message) => {
+      alert(message);
+    });
+
+    return () => {
+      socket.off("roomCreated");
+      socket.off("roomData");
+      socket.off("error");
+    };
+  }, []);
+
+  // socket actions
+  const handleCreateRoom = () => {
+    if (!playerName.trim()) return;
+    socket.emit("createRoom", { userName: playerName });
+  };
+
+  const handleJoinRoom = () => {
+    if (!playerName.trim() || !roomCode.trim()) return;
+    socket.emit("joinRoom", { roomId: roomCode, userName: playerName });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4 font-sans relative overflow-x-hidden overflow-y-auto md:overflow-hidden">
@@ -64,7 +96,9 @@ const GameMenu: React.FC<GameMenuProps> = ({
             </AnimatedGradientText>
           </p>
         </div>
+
         <div className="space-y-4">
+          {/* Leaderboard */}
           <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-white/10">
             <h3 className="text-white font-bold text-lg mb-3 flex items-center gap-2">
               <div className="p-1.5 bg-accent-300/20 rounded-lg">
@@ -94,7 +128,9 @@ const GameMenu: React.FC<GameMenuProps> = ({
                     >
                       {player.rank}
                     </div>
-                    <span className="font-medium text-sm">{player.player_name}</span>
+                    <span className="font-medium text-sm">
+                      {player.player_name}
+                    </span>
                   </span>
                   <span className="text-primary-200 font-bold text-sm">
                     {player.total_score}
@@ -133,7 +169,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
             )}
           </button>
 
-          {/* Casual Button - Added onClick handler */}
+          {/* Casual Button */}
           <button
             onClick={onStartCasual}
             onMouseEnter={() => setIsCasualHovered(true)}
@@ -183,7 +219,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
                   className="flex-1 px-3 py-2.5 text-sm rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-primary-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 transition-all duration-200 backdrop-blur-sm"
                 />
                 <button
-                  onClick={onJoinRoom}
+                  onClick={handleJoinRoom}
                   disabled={!playerName.trim() || !roomCode.trim()}
                   className="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-primary hover:shadow-lg hover:scale-105 flex items-center gap-1 text-sm"
                 >
@@ -193,7 +229,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
               </div>
 
               <button
-                onClick={onCreateRoom}
+                onClick={handleCreateRoom}
                 disabled={!playerName.trim()}
                 className="w-full py-3 bg-secondary-500 hover:bg-secondary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-secondary hover:shadow-lg hover:scale-105 flex items-center justify-center gap-2 text-sm"
               >
@@ -202,6 +238,20 @@ const GameMenu: React.FC<GameMenuProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Show active room data */}
+          {roomData && (
+            <div className="bg-black/40 backdrop-blur-xl mt-4 p-4 rounded-xl text-white">
+              <h4 className="font-bold mb-2">Room {roomCode}</h4>
+              <ul className="space-y-1">
+                {roomData.players.map((p: any) => (
+                  <li key={p.id}>
+                    {p.name} {p.isHost && "👑"} - {p.score}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
 
