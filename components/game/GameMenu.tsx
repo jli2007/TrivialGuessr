@@ -1,16 +1,8 @@
-
-import React, { useState, useEffect } from "react";
-import io  from "socket.io-client";
+import React, { useState } from "react";
 import { Calendar, User, Crown, Infinity } from "lucide-react";
 import { TypingAnimation } from "@/components/magicui/typing-animation";
 import { AnimatedGradientText } from "@/components/magicui/animated-gradient-text";
 import { LeaderboardEntry } from "@/types/leaderboard";
-
-// connect to your backend Socket.IO server
-const socket = io("http://localhost:3001", {
-  transports: ["websocket"],
-  autoConnect: true,
-});
 
 interface GameMenuProps {
   onStartDaily: () => void;
@@ -28,29 +20,14 @@ const GameMenu: React.FC<GameMenuProps> = ({
   const [isDailyHovered, setIsDailyHovered] = useState(false);
   const [isCasualHovered, setIsCasualHovered] = useState(false);
   const [isMultiplayerHovered, setIsMultiplayerHovered] = useState(false);
-  const [playerName, setPlayerName] = useState("");
-  const [roomCode, setRoomCode] = useState("");
-  const [roomData, setRoomData] = useState<any>(null);
-
-
-  // socket actions
-  const handleCreateRoom = () => {
-    if (!playerName.trim()) return;
-    socket.emit("createRoom", { userName: playerName });
-  };
-
-  const handleJoinRoom = () => {
-    if (!playerName.trim() || !roomCode.trim()) return;
-    socket.emit("joinRoom", { roomId: roomCode, userName: playerName });
-  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4 font-sans relative overflow-x-hidden overflow-y-auto md:overflow-hidden">
+    <div className="min-h-screen inset-0 z-50 bg-[url('/bg.jpg')] bg-cover bg-center  flex items-center justify-center p-4 relative overflow-x-hidden overflow-y-auto md:overflow-hidden">
       <div className="absolute inset-0 opacity-25 pointer-events-none overflow-hidden">
         <div
-          className="absolute inset-0 animate-diagonal-scroll"
+          className="absolute inset-0 animate-diagonal-scroll bg-amber-100/25 opacity-25"
           style={{
-            backgroundImage: "url(/logo.png)",
+            backgroundImage: "url(/logoY.png)",
             backgroundSize: "85px 100px",
             backgroundRepeat: "repeat",
             width: "calc(100% + 85px)",
@@ -58,21 +35,26 @@ const GameMenu: React.FC<GameMenuProps> = ({
           }}
         />
       </div>
-
       <div className="max-w-3xl w-full relative z-10 px-10">
         <div className="text-center mb-6">
           <div className="text-7xl font-bold text-white mb-2 drop-shadow-2xl">
-            🌍
             <TypingAnimation
-              className="text-7xl bg-gradient-to-r from-accent-300 to-accent-400 bg-clip-text text-transparent inline"
+              className="text-7xl bg-gradient-to-r from-accent-300 to-accent-400 bg-clip-text text-transparent inline !font-ragas font-bold"
               startOnView={true}
-              delay={250}
+              delay={200}
             >
-              TrivialGuessr
+              Trivial
+            </TypingAnimation>
+            <TypingAnimation
+              className="text-7xl bg-gradient-to-r from-accent-400 to-accent-500 bg-clip-text text-transparent inline !font-odachi px-2"
+              startOnView={true}
+              delay={1000}
+            >
+              Guessr.
             </TypingAnimation>
           </div>
-          <p className="text-primary-200 text-2xl font-medium drop-shadow-lg">
-            <AnimatedGradientText colorFrom="#ffff55ff" colorTo="#f4fdffff">
+          <p className="text-primary-200 text-2xl drop-shadow-lg !font-ragas font-bold">
+            <AnimatedGradientText colorFrom="#FCD730" colorTo="#FDDA37dd">
               Knowledge of little value or importance.
             </AnimatedGradientText>
           </p>
@@ -85,7 +67,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
               <div className="p-1.5 bg-accent-300/20 rounded-lg">
                 <Crown className="w-5 h-5 text-accent-300" />
               </div>
-              <AnimatedGradientText colorFrom="#ffff55ff" colorTo="#f4fdffff">
+              <AnimatedGradientText colorFrom="#ffff55ff" colorTo="#f4fdffff" className="!font-ragas">
                 Daily Leaderboard
               </AnimatedGradientText>
             </h3>
@@ -132,7 +114,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
             onClick={onStartDaily}
             onMouseEnter={() => setIsDailyHovered(true)}
             onMouseLeave={() => setIsDailyHovered(false)}
-            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"
+            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl !font-ragas font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"
           >
             <div className="p-1.5 bg-black/10 rounded-lg">
               <Calendar className="w-5 h-5" />
@@ -155,7 +137,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
             onClick={onStartCasual}
             onMouseEnter={() => setIsCasualHovered(true)}
             onMouseLeave={() => setIsCasualHovered(false)}
-            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"
+            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl !font-ragas font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"
           >
             <div className="p-1.5 bg-black/10 rounded-lg">
               <Infinity className="w-5 h-5" />
@@ -177,7 +159,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
             onClick={onStartMultiplayer}
             onMouseEnter={() => setIsMultiplayerHovered(true)}
             onMouseLeave={() => setIsMultiplayerHovered(false)}
-            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"
+            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl !font-ragas font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"
           >
             <div className="p-1.5 bg-black/10 rounded-lg">
               <User className="w-5 h-5" />

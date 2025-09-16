@@ -1,17 +1,16 @@
 "use client"
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Users, Play, UserPlus} from "lucide-react";
 import { useRouter, useParams } from 'next/navigation';
 import { GameAnswer, Player} from '@typesFolder/index';
 import {Question} from '@typesFolder/question';
-import { generateRoomCode, loadGoogleMapsScript } from '@utils/gameUtils';
+import { loadGoogleMapsScript } from '@utils/gameUtils';
 import GameQuestion from '@components/game/GameQuestion';
 import GameResult from '@components/game/GameResult';
 import LoadingScreen from '@components/LoadingScreen';
 import io, { Socket } from "socket.io-client";
 
-const SOCKET_SERVER_URL = "http://localhost:3001";
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
 const GamePage: React.FC = () => {
@@ -97,12 +96,12 @@ const GamePage: React.FC = () => {
     };
 
     // Handle player joined notifications
-    const handlePlayerJoined = ({ playerName: joinedPlayerName, playerId }: { playerName: string; playerId: string }) => {
+    const handlePlayerJoined = ({ playerName: joinedPlayerName }: { playerName: string; playerId: string }) => {
       console.log(`🎮 Player joined: ${joinedPlayerName}`);
     };
 
     // Handle player left notifications
-    const handlePlayerLeft = ({ playerName: leftPlayerName, playerId }: { playerName: string; playerId: string }) => {
+    const handlePlayerLeft = ({ playerName: leftPlayerName }: { playerName: string; playerId: string }) => {
       console.log(`👋 Player left: ${leftPlayerName}`);
     };
 
@@ -310,14 +309,6 @@ const GamePage: React.FC = () => {
 
   const handleGameEnd = (): void => {
     // Clean up socket connection
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
-    router.push('/');
-  };
-
-  const handleLeaveRoom = (): void => {
     if (socketRef.current) {
       socketRef.current.disconnect();
       socketRef.current = null;

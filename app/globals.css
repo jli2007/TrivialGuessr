@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -72,17 +72,12 @@
   --gradient-accent: linear-gradient(135deg, #fef08a, #facc15);
 
   /* Fonts */
+  --font-jesusa: "jesusa", sans-serif;
+  --font-ragas: "ragas", sans-serif;
+  --font-odachi: "odachi", sans-serif;
   --font-quicksand: "Quicksand", sans-serif;
   --font-family-quicksand: var(--font-quicksand);
   --font-family-sans: var(--font-quicksand);
-}
-
-button {
-  cursor: pointer !important;
-}
-
-* {
-  font-family: "Quicksand", sans-serif !important;
 }
 
 @theme inline {
@@ -124,46 +119,49 @@ button {
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   @keyframes marquee {
-  from {
-    transform: translateX(0);
+    from {
+      transform: translateX(0);
     }
-  to {
-    transform: translateX(calc(-100% - var(--gap)));
+    to {
+      transform: translateX(calc(-100% - var(--gap)));
     }
   }
   @keyframes marquee-vertical {
-  from {
-    transform: translateY(0);
+    from {
+      transform: translateY(0);
     }
-  to {
-    transform: translateY(calc(-100% - var(--gap)));
+    to {
+      transform: translateY(calc(-100% - var(--gap)));
     }
   }
-  --animate-line-shadow: line-shadow 15s linear infinite
-;
+  --animate-line-shadow: line-shadow 15s linear infinite;
   @keyframes line-shadow {
-  0% {
-    background-position: 0 0;
+    0% {
+      background-position: 0 0;
     }
-  100% {
-    background-position: 100% -100%;
+    100% {
+      background-position: 100% -100%;
     }
   }
   --animate-shiny-text: shiny-text 8s infinite;
   @keyframes shiny-text {
-  0%, 90%, 100% {
-    background-position: calc(-100% - var(--shiny-width)) 0;
+    0%,
+    90%,
+    100% {
+      background-position: calc(-100% - var(--shiny-width)) 0;
     }
-  30%, 60% {
-    background-position: calc(100% + var(--shiny-width)) 0;
+    30%,
+    60% {
+      background-position: calc(100% + var(--shiny-width)) 0;
     }
   }
   --animate-gradient: gradient 8s linear infinite;
   @keyframes gradient {
-  to {
-    background-position: var(--bg-size, 300%) 0;
+    to {
+      background-position: var(--bg-size, 200%) 0;
     }
-  }}
+  }
+}
 
 :root {
   --radius: 0.625rem;
@@ -243,6 +241,32 @@ button {
   }
 }
 
+@font-face {
+  font-family: "jesusa";
+  src: url("/fonts/jesusa.woff") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "ragas";
+  src: url("/fonts/ragas.woff") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "odachi";
+  src: url("/fonts/odachi.woff") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+
+
+button {
+  cursor: pointer !important;
+}
+
 /* Webkit browsers (Chrome, Safari, Edge) */
 .custom-scrollbar {
   /* Width of vertical scrollbar */
@@ -276,19 +300,23 @@ button {
 }
 
 .gaming-scrollbar::-webkit-scrollbar-track {
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.4) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.4) 100%
+  );
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .gaming-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #ffff55ae 0%, #f4fdffae 100%);
+  background: linear-gradient(180deg, #ffff55ee 0%, #f4fdffe6 100%);
   border-radius: 6px;
   box-shadow: 0 0 10px rgba(255, 255, 85, 0.3);
 }
 
 .gaming-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #ffff77ae 0%, #ffffffae 100%);
+  background: linear-gradient(180deg, #ffff77dd 0%, #faf5c5dd 100%);
   box-shadow: 0 0 15px rgba(255, 255, 85, 0.5);
 }
 
