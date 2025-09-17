@@ -39,7 +39,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
         <div className="text-center mb-6">
           <div className="text-7xl font-bold text-white mb-2 drop-shadow-2xl">
             <TypingAnimation
-              className="text-7xl bg-gradient-to-r from-accent-300 to-accent-400 bg-clip-text text-transparent inline !font-ragas font-bold"
+              className="text-8xl bg-gradient-to-r from-accent-300 to-accent-400 bg-clip-text text-transparent inline !font-ragas font-bold"
               startOnView={true}
               delay={200}
             >
@@ -114,7 +114,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
             onClick={onStartDaily}
             onMouseEnter={() => setIsDailyHovered(true)}
             onMouseLeave={() => setIsDailyHovered(false)}
-            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl !font-ragas font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"
+            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl !font-ragas font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl opacity-95"
           >
             <div className="p-1.5 bg-black/10 rounded-lg">
               <Calendar className="w-5 h-5" />
@@ -137,7 +137,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
             onClick={onStartCasual}
             onMouseEnter={() => setIsCasualHovered(true)}
             onMouseLeave={() => setIsCasualHovered(false)}
-            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl !font-ragas font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"
+            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl !font-ragas font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl opacity-95"
           >
             <div className="p-1.5 bg-black/10 rounded-lg">
               <Infinity className="w-5 h-5" />
@@ -159,7 +159,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
             onClick={onStartMultiplayer}
             onMouseEnter={() => setIsMultiplayerHovered(true)}
             onMouseLeave={() => setIsMultiplayerHovered(false)}
-            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl !font-ragas font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl"
+            className="w-full bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 py-3 px-4 rounded-2xl !font-ragas font-bold text-lg flex items-center justify-center gap-3 transform hover:scale-105 transition-all duration-300 shadow-accent hover:shadow-2xl opacity-95"
           >
             <div className="p-1.5 bg-black/10 rounded-lg">
               <User className="w-5 h-5" />
@@ -191,7 +191,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
         }
         
         .animate-diagonal-scroll {
-          animation: diagonal-scroll 20s linear infinite;
+          animation: diagonal-scroll 15s linear infinite;
         }
       `}</style>
     </div>

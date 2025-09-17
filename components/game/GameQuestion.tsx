@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Clock, Target, Globe, Info, MapPin, Calendar, Star, ArrowRight, Image as ImageIcon } from 'lucide-react';
-import { Question } from '../../types/question';
-import { Location, GameAnswer } from '../../types';
-import { haversineDistance, calculateScore } from '../../utils/gameUtils';
-import GoogleMap from '../GoogleMap';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
+import { Question } from "../../types/question";
+import { Location, GameAnswer } from "../../types";
+import { haversineDistance, calculateScore } from "../../utils/gameUtils";
+import GoogleMap from "../GoogleMap";
+import { Clock, ArrowRight, Lightbulb, Trophy, Star, HelpCircle, MapPin, Award } from "lucide-react";
 
 interface GameQuestionProps {
   question: Question;
@@ -22,7 +23,9 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
   onAnswerSubmitted,
   onNextRound,
 }) => {
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(
+    null
+  );
   const [showAnswer, setShowAnswer] = useState<boolean>(false);
   const [timeLeft, setTimeLeft] = useState<number>(60);
   const [currentAnswer, setCurrentAnswer] = useState<GameAnswer | null>(null);
@@ -30,28 +33,30 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
   const [imageExpanded, setImageExpanded] = useState<boolean>(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Wrap handleSubmitGuess in useCallback to prevent unnecessary re-renders
   const handleSubmitGuess = useCallback((): void => {
     if (showAnswer) return;
 
     let distance: number | null = null;
     let questionScore = 0;
-    
+
     const correctCoordinates = {
       lat: Number(question.answer_lat),
-      lng: Number(question.answer_lng)
+      lng: Number(question.answer_lng),
     };
-    
+
     if (isNaN(correctCoordinates.lat) || isNaN(correctCoordinates.lng)) {
-      console.error('Invalid coordinates in question:', question);
+      console.error("Invalid coordinates in question:", question);
       return;
     }
-    
-    if (!isFinite(correctCoordinates.lat) || !isFinite(correctCoordinates.lng)) {
-      console.error('Coordinates are not finite numbers:', correctCoordinates);
+
+    if (
+      !isFinite(correctCoordinates.lat) ||
+      !isFinite(correctCoordinates.lng)
+    ) {
+      console.error("Coordinates are not finite numbers:", correctCoordinates);
       return;
     }
-    
+
     if (selectedLocation) {
       distance = haversineDistance(
         selectedLocation.lat,
@@ -61,23 +66,23 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
       );
       questionScore = calculateScore(distance);
     }
-    
+
     const newAnswer: GameAnswer = {
       question: question.question,
       userGuess: selectedLocation,
       correctLocation: correctCoordinates,
       correctAnswer: `${question.answer_city}, ${question.answer_country}`,
       distance,
-      score: questionScore
+      score: questionScore,
     };
 
     setCurrentAnswer(newAnswer);
     setShowAnswer(true);
-    
+
     setTimeout(() => {
       onAnswerSubmitted(newAnswer);
     }, 0);
-    
+
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
@@ -87,7 +92,7 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
   useEffect(() => {
     if (!showAnswer && timeLeft > 0) {
       timerRef.current = setTimeout(() => {
-        setTimeLeft(prev => {
+        setTimeLeft((prev) => {
           if (prev <= 1) {
             handleSubmitGuess();
             return 0;
@@ -100,7 +105,7 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
         clearTimeout(timerRef.current);
       }
     }
-    
+
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
@@ -136,66 +141,72 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
     setImageExpanded(!imageExpanded);
   };
 
-  const getScoreColor = (score: number): string => {
-    if (score >= 4000) return 'text-green-400';
-    if (score >= 2000) return 'text-yellow-400';
-    if (score >= 1000) return 'text-orange-400';
-    return 'text-red-400';
-  };
-
   const getDistanceColor = (distance: number | null): string => {
-    if (!distance) return 'text-gray-400';
-    if (distance <= 100) return 'text-green-400';
-    if (distance <= 500) return 'text-yellow-400';
-    if (distance <= 1000) return 'text-orange-400';
-    return 'text-red-400';
+    if (!distance) return "text-gray-400";
+    if (distance <= 100) return "text-emerald-400";
+    if (distance <= 500) return "text-yellow-400";
+    if (distance <= 1000) return "text-amber-400";
+    return "text-red-400";
   };
 
   const getDifficultyColor = (difficulty: number) => {
-    if (difficulty <= 3) return 'text-green-400';
-    if (difficulty <= 6) return 'text-yellow-400';
-    return 'text-red-400';
+    if (difficulty <= 3) return "text-emerald-400";
+    if (difficulty <= 6) return "text-yellow-400";
+    return "text-red-400";
   };
 
   const getDifficultyText = (difficulty: number) => {
-    if (difficulty <= 3) return 'Easy';
-    if (difficulty <= 6) return 'Medium';
-    return 'Hard';
+    if (difficulty <= 3) return "Easy";
+    if (difficulty <= 6) return "Medium";
+    return "Hard";
   };
 
   const formatDistance = (distance: number | null): string => {
-    if (distance === null) return 'No guess made';
+    if (distance === null) return "No guess made";
     if (distance < 1) return `${Math.round(distance * 1000)}m`;
     return `${Math.round(distance)}km`;
   };
 
   return (
-    <div className="h-screen relative">
+    <div className="h-screen relative overflow-hidden">
+      {/* Background Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-900/10 via-slate-900/5 to-gray-900/10 pointer-events-none z-0" />
+      
       {/* Full-screen Map */}
       <GoogleMap
         onLocationSelect={handleLocationSelect}
         selectedLocation={selectedLocation}
-        correctLocation={showAnswer ? { lat: Number(question.answer_lat), lng: Number(question.answer_lng) } : null}
+        correctLocation={
+          showAnswer
+            ? {
+                lat: Number(question.answer_lat),
+                lng: Number(question.answer_lng),
+              }
+            : null
+        }
         showAnswer={showAnswer}
         isFullscreen={true}
       />
-      
+
       {/* Expanded Image Modal */}
       {imageExpanded && question.image_url && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
           onClick={toggleImageExpanded}
         >
-          <div className="relative max-w-4xl max-h-full">
-            <img
+          <div className="relative max-w-5xl max-h-full">
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/20 to-amber-500/20 rounded-2xl blur-xl" />
+            <Image
               src={question.image_url}
               alt={question.image_alt || question.question}
-              className="max-w-full max-h-full object-contain rounded-lg"
+              width={1200}
+              height={800}
+              className="relative max-w-full max-h-full object-contain rounded-2xl shadow-2xl border border-white/20"
               onError={handleImageError}
             />
             <button
               onClick={toggleImageExpanded}
-              className="absolute top-4 right-4 bg-black/70 text-white p-2 rounded-full hover:bg-black/90 transition-colors"
+              className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm text-white p-3 rounded-full hover:bg-black/90 transition-all duration-300 border border-white/20 shadow-lg"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -204,180 +215,271 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
           </div>
         </div>
       )}
-      
+
       {!showAnswer ? (
         <>
           {/* Timer - Center Top */}
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 rounded-xl shadow-2xl border border-white/10">
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-md rounded-xl"></div>
-            <div className="relative px-6 py-3 text-white">
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-blue-400" />
-                <span className={`font-bold text-xl ${timeLeft <= 10 ? 'text-red-400' : 'text-white'}`}>
-                  {timeLeft}s
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Score and Round Card - Top Right */}
-          <div className="absolute top-4 right-4 z-10 rounded-xl shadow-2xl border border-white/10">
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-md rounded-xl"></div>
-            <div className="relative p-4 text-white">
-              <div className="text-sm">
-                <span className="text-white/70">Round {currentQuestion + 1} of {totalQuestions}</span>
-                <div className="font-bold text-lg">Score: {score.toLocaleString()}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Question Card with Image - Top Left */}
-          <div className="absolute top-4 left-4 z-10 rounded-xl shadow-2xl max-w-sm w-80 border border-white/10">
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-md rounded-xl"></div>
-            
-            <div className="relative text-white overflow-hidden rounded-xl">
-              {/* Image Section */}
-              {question.image_url && !imageError && (
-                <div className="relative">
-                  <img
-                    src={question.image_url}
-                    alt={question.image_alt}
-                    className="w-full h-48 object-cover cursor-pointer hover:brightness-110 transition-all"
-                    onError={handleImageError}
-                    onClick={toggleImageExpanded}
-                  />
-                  
-                  {/* Image Expand Button */}
-                  <button
-                    onClick={toggleImageExpanded}
-                    className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-lg hover:bg-black/70 transition-colors"
+          <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-10">
+            <div className="relative">
+              {/* Glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/30 to-amber-400/30 rounded-2xl blur-lg" />
+              <div className="relative bg-black/80 backdrop-blur-xl rounded-2xl border border-yellow-500/30 shadow-2xl px-8 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Clock className={`w-6 h-6 ${timeLeft <= 10 ? 'text-red-400 animate-pulse' : 'text-yellow-400'}`} />
+                    {timeLeft <= 10 && (
+                      <div className="absolute inset-0 bg-red-400/30 rounded-full animate-ping" />
+                    )}
+                  </div>
+                  <span
+                    className={`font-bold text-2xl ${
+                      timeLeft <= 10 ? "text-red-400 animate-pulse" : "text-white"
+                    }`}
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                    </svg>
-                  </button>
+                    {timeLeft}s
+                  </span>
                 </div>
-              )}
+              </div>
+            </div>
+          </div>
 
-              {/* Question Content */}
-              <div className="p-4">
-                <h2 className="text-lg font-bold mb-3 leading-tight">{question.question}</h2>
-
-
-                {/* Category and Difficulty Row */}
-                <div className="mb-3 flex items-center gap-2 text-xs flex-wrap">
-                  <div className="bg-gray-500/20 px-2 py-1 rounded-md flex items-center gap-1">
-                    <Target className="w-3 h-3" />
-                    <span className={getDifficultyColor(question.difficulty)}>
-                      {getDifficultyText(question.difficulty)} ({question.difficulty}/10)
+          {/* Score Card - Top Right */}
+          <div className="absolute top-6 right-6 z-10">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/30 to-amber-400/30 rounded-2xl blur-lg" />
+              <div className="relative bg-black/80 backdrop-blur-xl rounded-2xl border border-yellow-500/30 shadow-2xl p-5">
+                <div className="text-white">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Trophy className="w-4 h-4 text-yellow-400" />
+                    <span className="text-white/80 text-sm font-medium">
+                      Round {currentQuestion + 1} of {totalQuestions}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Star className="w-5 h-5 text-yellow-400" />
+                    <span className="font-bold text-xl bg-gradient-to-r from-yellow-400 to-amber-400 bg-clip-text text-transparent">
+                      {score.toLocaleString()}
                     </span>
                   </div>
                 </div>
-                
-                {/* Submit Button */}
-                <button
-                  onClick={handleSubmitGuess}
-                  disabled={!selectedLocation}
-                  className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2 shadow-lg disabled:shadow-none"
-                >
-                  <Target className="w-4 h-4" />
-                  Submit Guess
-                </button>
               </div>
             </div>
           </div>
 
-          {/* Fun Fact Card - Bottom Right (if available and no image or image failed) */}
-          {question.fun_fact && (!question.image_url || imageError) && (
-            <div className="absolute bottom-4 right-4 z-10 rounded-xl shadow-2xl max-w-xs border border-yellow-500/20">
-              <div className="absolute inset-0 bg-black/85 backdrop-blur-md rounded-xl"></div>
-              <div className="relative p-4 text-white">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="text-lg">💡</div>
-                  <span className="text-sm font-medium text-yellow-300">Did You Know?</span>
+          {/* Question Card - Top Left */}
+          <div className="absolute top-6 left-6 z-10 max-w-sm w-80">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/30 to-amber-400/30 rounded-2xl blur-lg" />
+              <div className="relative bg-black/85 backdrop-blur-xl rounded-2xl border border-yellow-500/30 shadow-2xl overflow-hidden">
+                {/* Image Section */}
+                {question.image_url && !imageError && (
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
+                    <Image
+                      src={question.image_url}
+                      alt={question.image_alt}
+                      width={320}
+                      height={200}
+                      className="w-full h-50 object-cover cursor-pointer hover:scale-105 transition-transform duration-300"
+                      onError={handleImageError}
+                      onClick={toggleImageExpanded}
+                    />
+                    
+                    {/* Expand Button */}
+                    <button
+                      onClick={toggleImageExpanded}
+                      className="absolute top-3 right-3 z-20 bg-black/70 backdrop-blur-sm text-white p-2 rounded-xl hover:bg-black/90 transition-all duration-300 border border-white/20 shadow-lg group"
+                    >
+                      <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+
+                {/* Question Content */}
+                <div className="p-5 text-white">
+                  <h2 className="text-lg font-bold mb-4 leading-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                    {question.question}
+                  </h2>
+
+                  {/* Difficulty Badge */}
+                  <div className="mb-4 flex items-center gap-2">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-gray-500/30 to-gray-600/30 rounded-lg blur-sm" />
+                      <div className="relative bg-gray-800/80 backdrop-blur-sm px-3 py-2 rounded-lg flex items-center gap-2 border border-gray-600/30">
+                        <HelpCircle className="w-3 h-3 text-gray-300" />
+                        <span className={`text-xs font-bold ${getDifficultyColor(question.difficulty)}`}>
+                          {getDifficultyText(question.difficulty)} ({question.difficulty}/10)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={handleSubmitGuess}
+                    disabled={!selectedLocation}
+                    className="w-full relative group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/60 to-yellow-300/60 rounded-xl blur-md opacity-80 group-hover:opacity-100 transition-opacity disabled:opacity-20" />
+                    <div className={`relative bg-gradient-to-r from-yellow-500/65 to-yellow-400/65 backdrop-blur-sm text-white py-3 px-4 rounded-xl font-bold transition-all duration-300 border border-yellow-300/50 shadow-lg flex items-center justify-center gap-2 ${
+                      !selectedLocation ? 'opacity-40 cursor-not-allowed' : 'hover:from-yellow-400/60 hover:to-yellow-300/60 hover:scale-102 hover:shadow-yellow-400/30'
+                    }`}>
+                      <MapPin className="w-4 h-4" />
+                      Make Guess
+                    </div>
+                  </button>
                 </div>
-                <p className="text-sm text-white/90 leading-relaxed">{question.fun_fact}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Fun Fact Card - Bottom Left */}
+          {question.fun_fact && (
+            <div className="absolute bottom-6 left-6 z-10 max-w-sm w-80">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/30 to-amber-400/30 rounded-2xl blur-lg" />
+                <div className="relative bg-black/85 backdrop-blur-xl rounded-2xl border border-yellow-500/30 shadow-2xl p-5 text-white">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-yellow-500/30 rounded-full blur-sm" />
+                      <Lightbulb className="relative w-6 h-6 text-yellow-400" />
+                    </div>
+                    <span className="font-bold text-yellow-300 text-sm">
+                      Did You Know?
+                    </span>
+                  </div>
+                  <p className="text-sm text-white/90 leading-relaxed font-medium">
+                    {question.fun_fact}
+                  </p>
+                </div>
               </div>
             </div>
           )}
         </>
       ) : (
-        /* Answer Screen - Same as before */
+        /* Answer Screen */
         <>
-          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-sm px-3">
-            <div className="rounded-xl shadow-2xl border border-white/20">
-              <div className="absolute inset-0 bg-black/90 backdrop-blur-md rounded-xl"></div>
-              <div className="relative p-4 text-white">
-                <div className="text-center mb-3">
-                  <h2 className="text-lg font-bold mb-0.5">Round {currentQuestion + 1} Complete!</h2>
-                  <p className="text-white/70 text-xs">Here's how you did:</p>
+          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-md px-3">
+            <div className="relative">
+              {/* Animated glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/30 to-amber-400/30 rounded-2xl blur-lg animate-pulse" />
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/20 via-amber-400/20 to-yellow-600/20 rounded-2xl blur-xl opacity-60" />
+              
+              {/* Dynamic background with moving gradient */}
+              <div className="relative bg-gradient-to-br from-black/95 via-gray-900/90 to-black/95 backdrop-blur-xl rounded-2xl border border-yellow-500/40 shadow-2xl p-6 text-white overflow-hidden">
+                {/* Subtle animated background pattern */}
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute top-0 -left-4 w-24 h-24 bg-gradient-to-br from-yellow-400/30 to-amber-400/30 rounded-full blur-2xl animate-pulse"></div>
+                  <div className="absolute bottom-0 -right-4 w-32 h-32 bg-gradient-to-br from-amber-400/20 to-yellow-500/20 rounded-full blur-2xl animate-pulse delay-1000"></div>
                 </div>
-
-                <div className="text-center mb-3">
-                  <div className="text-2xl font-bold mb-0.5">
-                    <span className={getScoreColor(currentAnswer?.score || 0)}>
-                      {(currentAnswer?.score || 0).toLocaleString()}
-                    </span>
+                
+                <div className="relative z-10">
+                  <div className="text-center mb-4">
+                    <h2 className="text-xl font-bold mb-1 bg-gradient-to-r from-yellow-400 to-amber-400 bg-clip-text text-transparent">
+                      Round {currentQuestion + 1} Complete!
+                    </h2>
+                    <p className="text-white/70 text-sm">
+                      points earned
+                    </p>
                   </div>
-                  <p className="text-white/70 text-xs">points earned this round</p>
-                </div>
 
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  <div className="text-center p-2 bg-white/5 rounded-lg border border-white/10">
-                    <div className="text-base font-bold mb-0.5">
-                      <span className={getDistanceColor(currentAnswer?.distance || null)}>
-                        {formatDistance(currentAnswer?.distance || null)}
+                  <div className="text-center mb-4">
+                    <div className="text-3xl font-bold mb-1">
+                      <span className={`bg-gradient-to-r ${
+                        (currentAnswer?.score || 0) >= 4000 ? 'from-emerald-400 to-green-400' :
+                        (currentAnswer?.score || 0) >= 2000 ? 'from-yellow-400 to-amber-400' :
+                        (currentAnswer?.score || 0) >= 1000 ? 'from-amber-400 to-red-400' :
+                        'from-red-400 to-red-500'
+                      } bg-clip-text text-transparent`}>
+                        {(currentAnswer?.score || 0).toLocaleString()}
                       </span>
                     </div>
-                    <p className="text-xs text-white/70">distance off</p>
                   </div>
 
-                  <div className="text-center p-2 bg-white/5 rounded-lg border border-white/10">
-                    <div className="text-xs font-bold mb-0.5 text-blue-300 leading-tight">
-                      {question.answer_city}, {question.answer_country}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent rounded-xl blur-sm" />
+                      <div className="relative text-center p-3 bg-gradient-to-br from-white/20 via-white/10 to-white/5 rounded-xl border border-white/30 backdrop-blur-sm">
+                        <div className="text-lg font-bold mb-1">
+                          <span className={getDistanceColor(currentAnswer?.distance || null)}>
+                            {formatDistance(currentAnswer?.distance || null)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-white/70">distance off</p>
+                      </div>
                     </div>
-                    <p className="text-xs text-white/70">correct answer</p>
-                  </div>
-                </div>
 
-                <button
-                  onClick={handleNextRound}
-                  className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium flex items-center justify-center gap-2 shadow-lg text-sm"
-                >
-                  {currentQuestion < totalQuestions - 1 ? (
-                    <>
-                      Next Round
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  ) : (
-                    <>
-                      View Final Results
-                      <Target className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent rounded-xl blur-sm" />
+                      <div className="relative text-center p-3 bg-gradient-to-br from-white/20 via-white/10 to-white/5 rounded-xl border border-white/30 backdrop-blur-sm">
+                        <div className="text-sm font-bold mb-1 text-yellow-300 leading-tight">
+                          {question.answer_city}, {question.answer_country}
+                        </div>
+                        <p className="text-xs text-white/70">target location</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleNextRound}
+                    className="w-full relative group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/60 to-yellow-300/60 rounded-xl blur-sm opacity-75 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative bg-gradient-to-r from-yellow-500/65 to-yellow-400/65  text-white py-3 px-4 rounded-xl 'hover:from-yellow-400/60 hover:to-yellow-300/60  transition-all duration-300 font-bold flex items-center justify-center gap-2 shadow-lg hover:scale-105 border border-yellow-400/30">
+                      {currentQuestion < totalQuestions - 1 ? (
+                        <>
+                          Next Round
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      ) : (
+                        <>
+                          View Final Results
+                          <Award className="w-4 h-4" />
+                        </>
+                      )}
+                    </div>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Context Box with Image Support */}
-          <div className="fixed bottom-6 right-6 z-10 w-80 max-w-[calc(100vw-24rem)]">
-            <div className="rounded-2xl shadow-2xl border border-white/20">
-              <div className="absolute inset-0 bg-black/90 backdrop-blur-md rounded-2xl"></div>
-              <div className="relative p-4 text-white">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 mt-0.5">
-                    <div className="w-8 h-8 bg-blue-500/20 border border-blue-500/30 rounded-lg flex items-center justify-center">
-                      <svg className="w-4 h-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+          {/* Context Box */}
+          <div className="fixed bottom-8 right-8 z-10 w-80 max-w-[calc(100vw-2rem)]">
+            <div className="relative">
+              {/* Multi-layer glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/30 to-amber-400/30 rounded-2xl blur-lg" />
+              <div className="absolute inset-0 bg-gradient-to-tl from-amber-500/20 to-yellow-400/20 rounded-2xl blur-xl opacity-50" />
+              
+              {/* Enhanced background with layered gradients */}
+              <div className="relative bg-gradient-to-br from-black/95 via-gray-900/85 to-black/90 backdrop-blur-xl rounded-2xl border border-yellow-500/40 shadow-2xl p-5 text-white overflow-hidden">
+                {/* Animated background elements */}
+                <div className="absolute inset-0 opacity-15">
+                  <div className="absolute top-2 right-2 w-16 h-16 bg-gradient-to-br from-yellow-400/40 to-transparent rounded-full blur-xl animate-pulse"></div>
+                  <div className="absolute bottom-2 left-2 w-20 h-20 bg-gradient-to-tr from-amber-400/30 to-transparent rounded-full blur-2xl animate-pulse delay-700"></div>
+                </div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-yellow-500/40 rounded-lg blur-sm animate-pulse" />
+                        <div className="relative w-8 h-8 bg-gradient-to-br from-yellow-500/30 via-amber-500/20 to-yellow-600/30 border border-yellow-500/50 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                          <MapPin className="w-4 h-4 text-yellow-300" />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold mb-2 text-blue-300 text-sm">About this location</h3>
-                    <p className="text-xs text-white/90 leading-relaxed">
-                      {question.context || question.fun_fact || `${question.answer_city} is located in ${question.answer_country}.`}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold mb-2 text-yellow-300 text-sm">
+                        Location Info
+                      </h3>
+                      <p className="text-sm text-white/90 leading-relaxed">
+                        {question.context ||
+                          question.fun_fact ||
+                          `${question.answer_city} is located in ${question.answer_country}.`}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

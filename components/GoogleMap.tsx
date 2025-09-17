@@ -3,9 +3,9 @@
 "use client"
 
 import React, { useEffect, useRef } from 'react';
-import { MapPin, Target, Navigation } from 'lucide-react';
-import { GoogleMapProps, Location } from '../types';
-import { haversineDistance, formatDistance } from '../utils/gameUtils';
+import { Target } from 'lucide-react';
+import { GoogleMapProps } from '../types';
+import { haversineDistance} from '../utils/gameUtils';
 
 const GoogleMap: React.FC<GoogleMapProps> = ({ 
   onLocationSelect, 
@@ -25,7 +25,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
     // Initialize Google Map
     const mapOptions: google.maps.MapOptions = {
       center: { lat: 20, lng: 0 },
-      zoom: 2,
+      zoom: 5,
       minZoom: 2,
       maxZoom: 18,
       restriction: {
@@ -37,6 +37,8 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
         },
         strictBounds: false
       },
+      disableDefaultUI: true,
+      gestureHandling: 'cooperative',
       mapTypeControl: showAnswer,
       streetViewControl: false,
       fullscreenControl: false,
@@ -194,12 +196,6 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
       }
     }
   }, [selectedLocation, correctLocation, showAnswer]);
-
-  const formatDistanceDisplay = (distance: number): string => {
-    if (distance < 1) return `${Math.round(distance * 1000)}m`;
-    if (distance < 10) return `${distance.toFixed(1)}km`;
-    return `${Math.round(distance)}km`;
-  };
 
   return (
     <div className={`relative bg-blue-900 rounded-lg overflow-hidden border-2 border-white/20 ${isFullscreen ? 'h-full' : 'h-96'}`}>
