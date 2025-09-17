@@ -37,7 +37,6 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
       },
       disableDefaultUI: true,
       gestureHandling: 'cooperative',
-      mapTypeControl: showAnswer,
       streetViewControl: false,
       fullscreenControl: false,
       mapTypeId: google.maps.MapTypeId.HYBRID,
@@ -76,7 +75,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
   // Update markers when locations change
   useEffect(() => {
     const map = googleMapRef.current;
-    if (!map || !window.google || (showAnswer && markersRef.current.length == 2)) return;
+    if (!map || !window.google || (showAnswer && markersRef.current.length == 2) || (showAnswer && markersRef.current.length == 1 && markersRef.current[0].getTitle()=="Correct Location")) return;
 
     // Clear existing markers and polylines
     markersRef.current.forEach(marker => marker.setMap(null));
@@ -86,7 +85,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
       polylineRef.current.setMap(null);
       polylineRef.current = null;
     }
-
+    
     // Add user guess marker
     if (selectedLocation) {
       const userMarkerOptions: google.maps.MarkerOptions = {
