@@ -62,15 +62,6 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
     googleMapRef.current = map;
   }, [mapRef.current, window.google, onLocationSelect, showAnswer]);
 
-  // toggles MapTypeControl
-  useEffect(() => {
-    const map = googleMapRef.current;
-    if (!map) return;
-
-    map.setOptions({
-      mapTypeControl: showAnswer
-    });
-  }, [showAnswer]);
 
   // Update markers when locations change
   useEffect(() => {
@@ -132,14 +123,6 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
       };
 
       const correctMarker = new google.maps.Marker(correctMarkerOptions);
-
-      const correctInfoWindow = new google.maps.InfoWindow({
-        content: '<div style="color: black; font-weight: bold; padding: 4px;">🎯 Correct Location</div>'
-      });
-      
-      correctMarker.addListener('click', () => {
-        correctInfoWindow.open(map, correctMarker);
-      });
 
       markersRef.current.push(correctMarker);
 
