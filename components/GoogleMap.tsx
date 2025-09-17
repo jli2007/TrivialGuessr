@@ -1,5 +1,3 @@
-// components/GoogleMap.tsx
-
 "use client"
 
 import React, { useEffect, useRef } from 'react';
@@ -25,7 +23,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
     // Initialize Google Map
     const mapOptions: google.maps.MapOptions = {
       center: { lat: 20, lng: 0 },
-      zoom: 5,
+      zoom: 3,
       minZoom: 2,
       maxZoom: 18,
       restriction: {
@@ -198,7 +196,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
   }, [selectedLocation, correctLocation, showAnswer]);
 
   return (
-    <div className={`relative bg-blue-900 rounded-lg overflow-hidden border-2 border-white/20 ${isFullscreen ? 'h-full' : 'h-96'}`}>
+    <div className={`relative bg-blue-900 overflow-hidden ${isFullscreen ? 'h-full' : 'h-96'}`}>
       <div ref={mapRef} className="w-full h-full" />
       {showAnswer && !selectedLocation && correctLocation && (
         <div className="absolute bottom-4 left-4 bg-black/85 text-white px-4 py-3 rounded-lg text-sm backdrop-blur-sm border border-white/20">

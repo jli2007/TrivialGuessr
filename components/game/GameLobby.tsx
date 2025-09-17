@@ -1,4 +1,3 @@
-// components/GameLobby.tsx
 import React from 'react';
 import { Users, Crown, Play } from 'lucide-react';
 import { Player } from '../../types';

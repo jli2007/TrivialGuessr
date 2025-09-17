@@ -22,7 +22,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
   const [isMultiplayerHovered, setIsMultiplayerHovered] = useState(false);
 
   return (
-    <div className="min-h-screen inset-0 z-50 bg-[url('/bg.jpg')] bg-cover bg-center  flex items-center justify-center p-4 relative overflow-x-hidden overflow-y-auto md:overflow-hidden">
+    <div className="min-h-screen inset-0 z-50 bg-[url('/bg.jpg')] bg-cover bg-center flex items-center justify-center p-4 relative overflow-x-hidden overflow-y-auto md:overflow-hidden">
       <div className="absolute inset-0 opacity-25 pointer-events-none overflow-hidden">
         <div
           className="absolute inset-0 animate-diagonal-scroll bg-amber-100/25 opacity-25"

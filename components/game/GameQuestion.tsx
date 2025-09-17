@@ -172,7 +172,6 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
       {/* Background Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-900/10 via-slate-900/5 to-gray-900/10 pointer-events-none z-0" />
       
-      {/* Full-screen Map */}
       <GoogleMap
         onLocationSelect={handleLocationSelect}
         selectedLocation={selectedLocation}
@@ -400,8 +399,8 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
                   <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="relative">
                       <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent rounded-xl blur-sm" />
-                      <div className="relative text-center p-3 bg-gradient-to-br from-white/20 via-white/10 to-white/5 rounded-xl border border-white/30 backdrop-blur-sm">
-                        <div className="text-lg font-bold mb-1">
+                      <div className="relative text-center p-3 bg-gradient-to-br from-white/20 via-white/10 to-white/5 rounded-xl border border-white/30 backdrop-blur-sm flex flex-col justify-center min-h-[80px]">
+                        <div className="text-md font-bold">
                           <span className={getDistanceColor(currentAnswer?.distance || null)}>
                             {formatDistance(currentAnswer?.distance || null)}
                           </span>
@@ -412,7 +411,7 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
 
                     <div className="relative">
                       <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent rounded-xl blur-sm" />
-                      <div className="relative text-center p-3 bg-gradient-to-br from-white/20 via-white/10 to-white/5 rounded-xl border border-white/30 backdrop-blur-sm">
+                      <div className="relative text-center p-3 bg-gradient-to-br from-white/20 via-white/10 to-white/5 rounded-xl border border-white/30 backdrop-blur-sm flex flex-col justify-center min-h-[80px]">
                         <div className="text-sm font-bold mb-1 text-yellow-300 leading-tight">
                           {question.answer_city}, {question.answer_country}
                         </div>
