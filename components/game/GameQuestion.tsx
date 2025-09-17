@@ -293,6 +293,19 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                       </svg>
                     </button>
+
+                    {/* Difficulty Badge on Image */}
+                    <div className="absolute bottom-3 left-3 z-20">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-black/60 rounded-full blur-sm" />
+                        <div className="relative bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/20">
+                          <HelpCircle className="w-3 h-3 text-gray-300" />
+                          <span className={`text-xs font-bold ${getDifficultyColor(question.difficulty)}`}>
+                            {getDifficultyText(question.difficulty)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -301,19 +314,6 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
                   <h2 className="text-lg font-bold mb-4 leading-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                     {question.question}
                   </h2>
-
-                  {/* Difficulty Badge */}
-                  <div className="mb-4 flex items-center gap-2">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-gray-500/30 to-gray-600/30 rounded-lg blur-sm" />
-                      <div className="relative bg-gray-800/80 backdrop-blur-sm px-3 py-2 rounded-lg flex items-center gap-2 border border-gray-600/30">
-                        <HelpCircle className="w-3 h-3 text-gray-300" />
-                        <span className={`text-xs font-bold ${getDifficultyColor(question.difficulty)}`}>
-                          {getDifficultyText(question.difficulty)} ({question.difficulty}/10)
-                        </span>
-                      </div>
-                    </div>
-                  </div>
                   
                   <button
                     onClick={handleSubmitGuess}

@@ -49,7 +49,7 @@ const GameResult: React.FC<GameResultProps> = ({
     if (score >= 15000)
       return {
         rank: "Lock In Bro",
-        color: "text-green-400",
+        color: "text-amber-400",
         icon: <Star className="w-6 h-6" />,
       };
     return {
@@ -62,7 +62,7 @@ const GameResult: React.FC<GameResultProps> = ({
   const scoreRank = getScoreRank(score);
 
   return (
-    <div className="min-h-screen md:max-h-full inset-0 z-50 bg-[url('/bg.jpg')] bg-cover bg-center flex items-center justify-center p-4 relative overflow-x-hidden overflow-y-auto md:overflow-hidden">
+    <div className="md:h-screen md:max-h-full inset-0 z-50 bg-[url('/bg.jpg')] bg-cover bg-center flex items-center justify-center p-4 relative overflow-x-hidden overflow-y-auto md:overflow-hidden">
       {/* Subtle background elements */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(234,179,8,0.03),transparent_60%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(16,185,129,0.02),transparent_60%)]" />
