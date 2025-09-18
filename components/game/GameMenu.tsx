@@ -39,21 +39,21 @@ const GameMenu: React.FC<GameMenuProps> = ({
         <div className="text-center mb-6">
           <div className="text-7xl font-bold text-white mb-2 drop-shadow-2xl">
             <TypingAnimation
-              className="text-8xl bg-gradient-to-r from-accent-300 to-accent-400 bg-clip-text text-transparent inline !font-ragas font-bold"
+              className="text-6xl md:text-7xl lg:text-8xl bg-gradient-to-r from-accent-300 to-accent-400 bg-clip-text text-transparent inline !font-ragas font-bold"
               startOnView={true}
               delay={200}
             >
               Trivial
             </TypingAnimation>
             <TypingAnimation
-              className="text-8xl bg-gradient-to-r from-accent-400 to-accent-500 bg-clip-text text-transparent inline !font-odachi px-2"
+              className="text-6xl md:text-7xl lg:text-8xl bg-gradient-to-r from-accent-400 to-accent-500 bg-clip-text text-transparent inline !font-odachi px-2"
               startOnView={true}
               delay={1000}
             >
               Guessr.
             </TypingAnimation>
           </div>
-          <p className="text-primary-200 text-2xl drop-shadow-lg !font-ragas font-bold">
+          <p className="text-primary-200 text-xl md:text-2xl drop-shadow-lg !font-ragas font-bold">
             <AnimatedGradientText colorFrom="#FCD730" colorTo="#FDDA37dd">
               Knowledge of little value or importance.
             </AnimatedGradientText>

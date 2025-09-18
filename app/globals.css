@@ -178,7 +178,7 @@
 
 @font-face {
   font-family: "odachi";
-  src: url("/fonts/odachi.woff") format("woff2");
+  src: url("/fonts/odachis.woff") format("woff");
   font-weight: 400;
   font-style: normal;
 }
