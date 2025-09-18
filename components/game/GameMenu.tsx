@@ -9,6 +9,8 @@ interface GameMenuProps {
   onStartCasual: () => void;
   onStartMultiplayer: () => void;
   dailyLeaderboard: LeaderboardEntry[];
+  hasPlayedDaily?: boolean;
+  dailyScore?: number | null;
 }
 
 const GameMenu: React.FC<GameMenuProps> = ({

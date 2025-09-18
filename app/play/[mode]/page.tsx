@@ -19,6 +19,9 @@ const GamePage: React.FC = () => {
   const mode = params?.mode as string;
   const socketRef = useRef<typeof Socket | null>(null);
 
+  const [hasPlayedDailyGame, setHasPlayedDailyGame] = useState<boolean>(false);
+  const [dailyGameData, setDailyGameData] = useState<{score: number, answers: GameAnswer[]} | null>(null);
+
   // Game state
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
   const [score, setScore] = useState<number>(0);
@@ -48,6 +51,51 @@ const GamePage: React.FC = () => {
   const [showNamePopup, setShowNamePopup] = useState<boolean>(false);
   const [leaderboardName, setLeaderboardName] = useState<string>("");
   const [submittingScore, setSubmittingScore] = useState<boolean>(false);
+
+  // Daily challenge localStorage functions
+  const getDailyGameKey = () => {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    return `daily_game_${today}`;
+  };
+
+  const checkDailyGameStatus = () => {
+    if (typeof window !== 'undefined') {
+      const dailyKey = getDailyGameKey();
+      const savedData = localStorage.getItem(dailyKey);
+      
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          setHasPlayedDailyGame(true);
+          setDailyGameData(parsed);
+          setScore(parsed.score);
+          setAnswers(parsed.answers);
+          setGameComplete(true);
+          return true;
+        } catch (error) {
+          console.error("Error parsing daily game data:", error);
+          localStorage.removeItem(dailyKey);
+        }
+      }
+    }
+    return false;
+  };
+
+  const saveDailyGameResult = (finalScore: number, gameAnswers: GameAnswer[]) => {
+    if (typeof window !== 'undefined') {
+      const dailyKey = getDailyGameKey();
+      const gameData = {
+        score: finalScore,
+        answers: gameAnswers,
+        completedAt: new Date().toISOString(),
+        hasPlayed: true
+      };
+      
+      localStorage.setItem(dailyKey, JSON.stringify(gameData));
+      setHasPlayedDailyGame(true);
+      setDailyGameData(gameData);
+    }
+  };
 
   // Initialize socket connection
   useEffect(() => {
@@ -178,6 +226,17 @@ const GamePage: React.FC = () => {
     }
   }, [mode, router]);
 
+  // Check daily game status on mount
+  useEffect(() => {
+    if (mode === "daily") {
+      const hasPlayed = checkDailyGameStatus();
+      if (hasPlayed) {
+        console.log("Daily challenge already completed today");
+        return; // Skip game initialization, go straight to results
+      }
+    }
+  }, [mode]);
+
   // Load Google Maps API
   useEffect(() => {
     if (mapsLoadAttempted) return;
@@ -284,11 +343,16 @@ const GamePage: React.FC = () => {
   useEffect(() => {
     if (!googleMapsLoaded) return;
 
+    // Skip initialization if daily game was already played
+    if (mode === "daily" && hasPlayedDailyGame) {
+      return;
+    }
+
     if (mode === "daily" || mode === "casual") {
       initializeGame();
     }
     // For multiplayer, we wait for room setup
-  }, [googleMapsLoaded, mode]);
+  }, [googleMapsLoaded, mode, hasPlayedDailyGame]);
 
   // Initialize game with question fetching
   const initializeGame = async (): Promise<void> => {
@@ -424,8 +488,9 @@ const GamePage: React.FC = () => {
       // Game is completing
       setGameComplete(true);
 
-      // If this is a daily game, show name popup
+      // Save daily game result to localStorage if it's a daily game
       if (mode === "daily") {
+        saveDailyGameResult(score, answers);
         setShowNamePopup(true);
       }
     }
@@ -539,6 +604,18 @@ const GamePage: React.FC = () => {
           </div>
         </div>
       </div>
+    );
+  }
+
+  // Render game complete screen for daily challenge already played
+  if (mode === "daily" && hasPlayedDailyGame && dailyGameData && googleMapsLoaded) {
+    return (
+      <GameResult 
+        score={dailyGameData.score} 
+        answers={dailyGameData.answers} 
+        onPlayAgain={handleGameEnd}
+        isDailyReplay={true}
+      />
     );
   }
 

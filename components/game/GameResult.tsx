@@ -7,6 +7,7 @@ interface GameResultProps {
   score: number;
   answers: GameAnswer[];
   onPlayAgain: () => void;
+  isDailyReplay?: boolean;
 }
 
 const GameResult: React.FC<GameResultProps> = ({
