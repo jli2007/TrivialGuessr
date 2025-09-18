@@ -46,7 +46,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
               Trivial
             </TypingAnimation>
             <TypingAnimation
-              className="text-7xl bg-gradient-to-r from-accent-400 to-accent-500 bg-clip-text text-transparent inline !font-odachi px-2"
+              className="text-8xl bg-gradient-to-r from-accent-400 to-accent-500 bg-clip-text text-transparent inline !font-odachi px-2"
               startOnView={true}
               delay={1000}
             >

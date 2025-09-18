@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Users, Play, UserPlus} from "lucide-react";
-import { useRouter, useParams } from 'next/navigation';
-import { GameAnswer, Player} from '@typesFolder/index';
-import {Question} from '@typesFolder/question';
-import { loadGoogleMapsScript } from '@utils/gameUtils';
-import GameQuestion from '@components/game/GameQuestion';
-import GameResult from '@components/game/GameResult';
-import LoadingScreen from '@components/LoadingScreen';
+import React, { useState, useEffect, useRef } from "react";
+import { Users, Play, UserPlus } from "lucide-react";
+import { useRouter, useParams } from "next/navigation";
+import { GameAnswer, Player } from "@typesFolder/index";
+import { Question } from "@typesFolder/question";
+import { loadGoogleMapsScript } from "@utils/gameUtils";
+import GameQuestion from "@components/game/GameQuestion";
+import GameResult from "@components/game/GameResult";
+import LoadingScreen from "@components/LoadingScreen";
 import io, { Socket } from "socket.io-client";
 
-const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
 const GamePage: React.FC = () => {
   const router = useRouter();
@@ -25,12 +25,12 @@ const GamePage: React.FC = () => {
   const [answers, setAnswers] = useState<GameAnswer[]>([]);
   const [gameComplete, setGameComplete] = useState<boolean>(false);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
-  
+
   // Question state
   const [questions, setQuestions] = useState<Question[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState<boolean>(false);
   const [questionsError, setQuestionsError] = useState<string | null>(null);
-  
+
   // UI state
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState<boolean>(false);
   const [apiKeyMissing, setApiKeyMissing] = useState<boolean>(false);
@@ -44,9 +44,14 @@ const GamePage: React.FC = () => {
   const [roomData, setRoomData] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
 
+  // Dailys
+  const [showNamePopup, setShowNamePopup] = useState<boolean>(false);
+  const [leaderboardName, setLeaderboardName] = useState<string>("");
+  const [submittingScore, setSubmittingScore] = useState<boolean>(false);
+
   // Initialize socket connection
   useEffect(() => {
-    if (mode !== 'multiplayer') return;
+    if (mode !== "multiplayer") return;
 
     // Create socket connection if it doesn't exist
     if (!socketRef.current) {
@@ -74,7 +79,7 @@ const GamePage: React.FC = () => {
 
   // Setup socket listeners
   useEffect(() => {
-    if (mode !== 'multiplayer' || !socketRef.current) return;
+    if (mode !== "multiplayer" || !socketRef.current) return;
 
     const socket = socketRef.current;
 
@@ -89,19 +94,31 @@ const GamePage: React.FC = () => {
       setRoomData(data);
       setRoomPlayers(data.players || []);
       console.log("📡 Room data updated:", data);
-      
+
       // Check if this is the first time receiving room data after creating/joining
-      const currentPlayer = data.players?.find((p: any) => p.name === playerName);
+      const currentPlayer = data.players?.find(
+        (p: any) => p.name === playerName
+      );
       setIsHost(currentPlayer?.isHost || false);
     };
 
     // Handle player joined notifications
-    const handlePlayerJoined = ({ playerName: joinedPlayerName }: { playerName: string; playerId: string }) => {
+    const handlePlayerJoined = ({
+      playerName: joinedPlayerName,
+    }: {
+      playerName: string;
+      playerId: string;
+    }) => {
       console.log(`🎮 Player joined: ${joinedPlayerName}`);
     };
 
     // Handle player left notifications
-    const handlePlayerLeft = ({ playerName: leftPlayerName }: { playerName: string; playerId: string }) => {
+    const handlePlayerLeft = ({
+      playerName: leftPlayerName,
+    }: {
+      playerName: string;
+      playerId: string;
+    }) => {
       console.log(`👋 Player left: ${leftPlayerName}`);
     };
 
@@ -138,22 +155,25 @@ const GamePage: React.FC = () => {
   // Socket actions
   const handleCreateRoom = () => {
     if (!playerName.trim() || !socketRef.current) return;
-    
+
     console.log(`Creating room with player name: ${playerName}`);
     socketRef.current.emit("createRoom", { userName: playerName });
   };
 
   const handleJoinRoom = () => {
     if (!playerName.trim() || !roomCode.trim() || !socketRef.current) return;
-    
+
     console.log(`Joining room ${roomCode} with player name: ${playerName}`);
-    socketRef.current.emit("joinRoom", { roomId: roomCode, userName: playerName });
+    socketRef.current.emit("joinRoom", {
+      roomId: roomCode,
+      userName: playerName,
+    });
   };
 
   // Redirect invalid modes
   useEffect(() => {
-    if (!['daily', 'casual', 'multiplayer'].includes(mode)) {
-      router.push('/');
+    if (!["daily", "casual", "multiplayer"].includes(mode)) {
+      router.push("/");
       return;
     }
   }, [mode, router]);
@@ -165,24 +185,26 @@ const GamePage: React.FC = () => {
     const loadMapsAPI = async () => {
       setMapsLoadAttempted(true);
 
-      if (typeof window !== 'undefined' && window.google?.maps) {
-        console.log('Google Maps already loaded');
+      if (typeof window !== "undefined" && window.google?.maps) {
+        console.log("Google Maps already loaded");
         setGoogleMapsLoaded(true);
         return;
       }
 
-      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+      const existingScript = document.querySelector(
+        'script[src*="maps.googleapis.com"]'
+      );
       if (existingScript) {
-        console.log('Google Maps script already exists, waiting for load...');
-        
-        existingScript.addEventListener('load', () => {
+        console.log("Google Maps script already exists, waiting for load...");
+
+        existingScript.addEventListener("load", () => {
           setGoogleMapsLoaded(true);
         });
-        
-        existingScript.addEventListener('error', () => {
+
+        existingScript.addEventListener("error", () => {
           setApiKeyMissing(true);
         });
-        
+
         return;
       }
 
@@ -190,7 +212,7 @@ const GamePage: React.FC = () => {
         await loadGoogleMapsScript(GOOGLE_MAPS_API_KEY);
         setGoogleMapsLoaded(true);
       } catch (error) {
-        console.error('Failed to load Google Maps:', error);
+        console.error("Failed to load Google Maps:", error);
         setApiKeyMissing(true);
       }
     };
@@ -199,25 +221,28 @@ const GamePage: React.FC = () => {
   }, []);
 
   // Server integration function
-  const fetchQuestions = async (gameMode: string, offset: number = 0): Promise<Question[]> => {
+  const fetchQuestions = async (
+    gameMode: string,
+    offset: number = 0
+  ): Promise<Question[]> => {
     setQuestionsLoading(true);
     setQuestionsError(null);
 
     try {
-      let endpoint = '';
+      let endpoint = "";
 
       switch (gameMode) {
-        case 'daily':
-          endpoint = '/api/daily_challenge?action=all';
+        case "daily":
+          endpoint = "/api/daily_challenge?action=all";
           break;
-        case 'casual':
+        case "casual":
           endpoint = `/api/questions?action=random&limit=10&offset=${offset}`;
           break;
-        case 'multiplayer':
-          endpoint = '/api/questions?action=random&limit=10';
+        case "multiplayer":
+          endpoint = "/api/questions?action=random&limit=10";
           break;
         default:
-          throw new Error('Invalid game mode');
+          throw new Error("Invalid game mode");
       }
 
       const response = await fetch(endpoint);
@@ -232,18 +257,23 @@ const GamePage: React.FC = () => {
       let questions: Question[] = [];
       if (Array.isArray(parsed)) {
         questions = parsed as Question[];
-      } else if ((parsed as any)?.questions && Array.isArray((parsed as any).questions)) {
+      } else if (
+        (parsed as any)?.questions &&
+        Array.isArray((parsed as any).questions)
+      ) {
         questions = (parsed as any).questions as Question[];
       }
 
       if (!Array.isArray(questions) || questions.length === 0) {
-        throw new Error('No questions received from server');
+        throw new Error("No questions received from server");
       }
 
       return questions;
     } catch (error) {
-      console.error('Error fetching questions:', error);
-      setQuestionsError(error instanceof Error ? error.message : 'Failed to load questions');
+      console.error("Error fetching questions:", error);
+      setQuestionsError(
+        error instanceof Error ? error.message : "Failed to load questions"
+      );
       return [];
     } finally {
       setQuestionsLoading(false);
@@ -253,8 +283,8 @@ const GamePage: React.FC = () => {
   // Initialize game based on mode
   useEffect(() => {
     if (!googleMapsLoaded) return;
-    
-    if (mode === 'daily' || mode === 'casual') {
+
+    if (mode === "daily" || mode === "casual") {
       initializeGame();
     }
     // For multiplayer, we wait for room setup
@@ -264,11 +294,11 @@ const GamePage: React.FC = () => {
   const initializeGame = async (): Promise<void> => {
     try {
       const fetchedQuestions = await fetchQuestions(mode);
-      console.log('Loaded questions:', fetchedQuestions);
+      console.log("Loaded questions:", fetchedQuestions);
       setQuestions(fetchedQuestions);
       startGame();
     } catch (error) {
-      console.error('Failed to initialize game:', error);
+      console.error("Failed to initialize game:", error);
       startGame();
     }
   };
@@ -283,28 +313,133 @@ const GamePage: React.FC = () => {
 
   const startMultiplayerGame = async (): Promise<void> => {
     try {
-      const fetchedQuestions = await fetchQuestions('multiplayer');
+      const fetchedQuestions = await fetchQuestions("multiplayer");
       setQuestions(fetchedQuestions);
       startGame();
     } catch (error) {
-      console.error('Failed to start multiplayer game:', error);
+      console.error("Failed to start multiplayer game:", error);
       startGame();
     }
   };
 
   // Handle answer submission from GameQuestion
   const handleAnswerSubmitted = (answer: GameAnswer): void => {
-    setAnswers(prev => [...prev, answer]);
-    setScore(prev => prev + answer.score);
+    setAnswers((prev) => [...prev, answer]);
+    setScore((prev) => prev + answer.score);
   };
 
-  // Handle moving to next round from GameQuestion
+  const handleDailyGameCompletion = async (
+    finalScore: number,
+    name: string
+  ) => {
+    setSubmittingScore(true);
+
+    try {
+      const response = await fetch("/api/game", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          player_name: name || "Anonymous Player",
+          total_score: finalScore,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        console.log("✅ Daily score submitted successfully:", result.data);
+      } else {
+        console.error("❌ Failed to submit daily score:", result.error);
+        // You might want to show an error message here
+      }
+    } catch (error) {
+      console.error("❌ Error submitting daily score:", error);
+    } finally {
+      setSubmittingScore(false);
+      setShowNamePopup(false);
+    }
+  };
+
+  const NamePopup = () => (
+    <div className="fixed inset-0 min-h-screen bg-[url('/bg.jpg')] bg-cover bg-center overflow-x-hidden overflow-y-auto md:overflow-hidden backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-gradient-to-br from-primary-800/95 to-secondary-800/95 backdrop-blur-xl rounded-2xl p-6 max-w-md w-full border border-white/20 shadow-2xl">
+        <div className="text-center mb-6">
+          <div className="text-4xl mb-3">🏆</div>
+          <h2 className="text-2xl font-bold text-white mb-2">Game Complete</h2>
+            <p className="text-white/80">
+              Enter your name for the daily leaderboard
+            </p>
+            <p className="text-secondary-300 font-semibold mt-2">
+              Score: {score}
+            </p>
+        </div>
+
+        <div className="space-y-4">
+          <input
+            type="text"
+            placeholder="Enter your name"
+            value={leaderboardName}
+            onChange={(e) => setLeaderboardName(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleNameSubmit()}
+            className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-secondary-400/60 focus:outline-none focus:ring-2 focus:ring-secondary-400/20 transition-all duration-200"
+            disabled={submittingScore}
+            autoFocus
+          />
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleNameSubmit}
+              disabled={!leaderboardName.trim() || submittingScore}
+              className="flex-1 py-3 bg-secondary-500 hover:bg-secondary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold flex items-center justify-center gap-2"
+            >
+              {submittingScore ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Submitting...
+                </>
+              ) : (
+                "Submit Score"
+              )}
+            </button>
+
+            <button
+              onClick={handleSkipName}
+              disabled={submittingScore}
+              className="px-4 py-3 bg-white/10 hover:bg-white/20 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-medium"
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const handleNextRound = async (): Promise<void> => {
     if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(prev => prev + 1);
+      setCurrentQuestion((prev) => prev + 1);
     } else {
+      // Game is completing
       setGameComplete(true);
+
+      // If this is a daily game, show name popup
+      if (mode === "daily") {
+        setShowNamePopup(true);
+      }
     }
+  };
+
+  // Handle name submission
+  const handleNameSubmit = async () => {
+    if (!leaderboardName.trim()) return;
+    await handleDailyGameCompletion(score, leaderboardName);
+  };
+
+  // Handle skipping name entry
+  const handleSkipName = async () => {
+    await handleDailyGameCompletion(score, "Anonymous Player");
   };
 
   const handleGameEnd = (): void => {
@@ -313,15 +448,15 @@ const GamePage: React.FC = () => {
       socketRef.current.disconnect();
       socketRef.current = null;
     }
-    router.push('/');
+    router.push("/");
   };
 
   // Get player name from URL params if coming from home page
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const nameFromUrl = urlParams.get('playerName');
-    const codeFromUrl = urlParams.get('roomCode');
-    
+    const nameFromUrl = urlParams.get("playerName");
+    const codeFromUrl = urlParams.get("roomCode");
+
     if (nameFromUrl) setPlayerName(nameFromUrl);
     if (codeFromUrl) setRoomCode(codeFromUrl);
   }, []);
@@ -346,11 +481,14 @@ const GamePage: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4">
         <div className="max-w-2xl w-full bg-white/10 backdrop-blur-md rounded-xl p-8 text-center">
           <div className="text-6xl mb-4">🗺️</div>
-          <h2 className="text-3xl font-bold text-white mb-6">Google Maps Integration</h2>
+          <h2 className="text-3xl font-bold text-white mb-6">
+            Google Maps Integration
+          </h2>
           <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-6 mb-6">
             <h3 className="text-red-300 font-semibold mb-3">API Key Error</h3>
             <p className="text-white/90 mb-4">
-              There was an issue loading Google Maps. Please check your API key and ensure:
+              There was an issue loading Google Maps. Please check your API key
+              and ensure:
             </p>
             <ol className="text-left text-white/80 space-y-2">
               <li>1. The API key is valid and active</li>
@@ -371,14 +509,18 @@ const GamePage: React.FC = () => {
   }
 
   // Render questions error if needed
-  if (questionsError && questions.length === 0 && mode !== 'multiplayer') {
+  if (questionsError && questions.length === 0 && mode !== "multiplayer") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 flex items-center justify-center p-4">
         <div className="max-w-2xl w-full bg-white/10 backdrop-blur-md rounded-xl p-8 text-center">
           <div className="text-6xl mb-4">❌</div>
-          <h2 className="text-3xl font-bold text-white mb-6">Questions Loading Error</h2>
+          <h2 className="text-3xl font-bold text-white mb-6">
+            Questions Loading Error
+          </h2>
           <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-6 mb-6">
-            <h3 className="text-red-300 font-semibold mb-3">Failed to Load Questions</h3>
+            <h3 className="text-red-300 font-semibold mb-3">
+              Failed to Load Questions
+            </h3>
             <p className="text-white/90 mb-4">{questionsError}</p>
           </div>
           <div className="flex gap-4 justify-center">
@@ -401,23 +543,28 @@ const GamePage: React.FC = () => {
   }
 
   // Render game complete screen
-  if (gameComplete) {
+  if (showNamePopup && mode === "daily") {
+    return <NamePopup />;
+  }
+
+  // Render game complete screen
+  if (gameComplete && (!showNamePopup || mode !== "daily")) {
     return (
-      <GameResult
-        score={score}
-        answers={answers}
-        onPlayAgain={handleGameEnd}
-      />
+      <GameResult score={score} answers={answers} onPlayAgain={handleGameEnd} />
     );
   }
 
   // MAIN GAME RENDERING
-  if (gameStarted && questions.length > 0 && currentQuestion < questions.length) {
+  if (
+    gameStarted &&
+    questions.length > 0 &&
+    currentQuestion < questions.length
+  ) {
     return (
       <GameQuestion
         question={questions[currentQuestion]}
         currentQuestion={currentQuestion}
-        totalQuestions={mode === 'casual' ? 10 : questions.length}
+        totalQuestions={mode === "casual" ? 10 : questions.length}
         score={score}
         onAnswerSubmitted={handleAnswerSubmitted}
         onNextRound={handleNextRound}
@@ -426,7 +573,7 @@ const GamePage: React.FC = () => {
   }
 
   // Multiplayer setup screen
-  if (mode === 'multiplayer') {
+  if (mode === "multiplayer") {
     return (
       <div className="space-y-4">
         <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-white/10 hover:border-secondary-400/30 transition-all duration-300">
@@ -462,7 +609,9 @@ const GamePage: React.FC = () => {
               />
               <button
                 onClick={handleJoinRoom}
-                disabled={!playerName.trim() || !roomCode.trim() || !isConnected}
+                disabled={
+                  !playerName.trim() || !roomCode.trim() || !isConnected
+                }
                 className="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-primary hover:shadow-lg hover:scale-105 flex items-center gap-1 text-sm"
               >
                 <Play className="w-3 h-3" />
@@ -495,21 +644,31 @@ const GamePage: React.FC = () => {
           <div className="bg-black/10 backdrop-blur-xl rounded-2xl p-4 border border-white/10">
             <h4 className="text-white font-bold mb-2 flex items-center gap-2">
               <Users className="w-4 h-4" />
-              Room {roomCode} ({roomPlayers.length} player{roomPlayers.length !== 1 ? 's' : ''})
+              Room {roomCode} ({roomPlayers.length} player
+              {roomPlayers.length !== 1 ? "s" : ""})
             </h4>
             <div className="space-y-2">
               {roomPlayers.map((player: any) => (
-                <div key={player.id} className="flex items-center justify-between bg-white/5 rounded-lg p-2">
+                <div
+                  key={player.id}
+                  className="flex items-center justify-between bg-white/5 rounded-lg p-2"
+                >
                   <span className="text-white/90 flex items-center gap-2">
-                    {player.name} 
-                    {player.isHost && <span className="text-yellow-400">👑</span>}
-                    {player.name === playerName && <span className="text-blue-400">(You)</span>}
+                    {player.name}
+                    {player.isHost && (
+                      <span className="text-yellow-400">👑</span>
+                    )}
+                    {player.name === playerName && (
+                      <span className="text-blue-400">(You)</span>
+                    )}
                   </span>
-                  <span className="text-white/70 text-sm">Score: {player.score}</span>
+                  <span className="text-white/70 text-sm">
+                    Score: {player.score}
+                  </span>
                 </div>
               ))}
             </div>
-            
+
             {roomPlayers.length > 1 && !isHost && (
               <div className="mt-3 text-center text-white/60 text-sm">
                 Waiting for host to start the game...
