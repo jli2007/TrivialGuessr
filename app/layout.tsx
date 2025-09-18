@@ -14,6 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <link rel="icon" href="/marker.svg" />
       <body
         className={`antialiased font-quicksand`}
       >

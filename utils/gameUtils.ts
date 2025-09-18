@@ -1,5 +1,3 @@
-// utils/gameUtils.ts
-
 // Haversine distance calculation
 export const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
   const R = 6371; // Earth's radius in kilometers
@@ -24,10 +22,6 @@ export const formatDistance = (km: number): string => {
   if (km < 1) return `${Math.round(km * 1000)}m`;
   if (km < 100) return `${km.toFixed(1)}km`;
   return `${Math.round(km)}km`;
-};
-
-export const generateRoomCode = (): string => {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
 };
 
 export const loadGoogleMapsScript = (apiKey: string): Promise<void> => {

@@ -38,17 +38,3 @@ export interface QuestionResponse {
   questions: Question[];
   total?: number;
 }
-
-export interface BatchGenerateRequest {
-  categories?: QuestionCategory[];
-  batchSize?: number;
-}
-
-export interface BatchGenerateResponse {
-  success: boolean;
-  results: Array<{
-    category: string;
-    generated: number;
-  }>;
-  total: number;
-}

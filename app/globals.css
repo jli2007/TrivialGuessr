@@ -45,19 +45,6 @@
   --color-accent-950: #422006;
   --color-accent: #fde74c;
 
-  /* Your existing colors */
-  --color-green1: #1ed760;
-  --color-green2: #95ffe1;
-  --color-green3: #0c9b7d;
-  --color-green4: #b3e1ca;
-  --color-turquoise1: #daf4f0;
-  --color-turquoise2: #70e2ff;
-  --color-turquoise3: #0e70ad;
-  --color-blue1: #add8e6;
-  --color-blue2: #1f87ff;
-  --color-blue3: #143bff;
-  --color-blue4: #030825;
-
   /* Custom shadows */
   --shadow-primary: 0 10px 25px -3px rgb(37 110 255 / 0.3);
   --shadow-secondary: 0 10px 25px -3px rgb(42 157 143 / 0.3);
@@ -79,8 +66,6 @@
 }
 
 @theme inline {
-  --animate-marquee: marquee var(--duration) infinite linear;
-  --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -116,22 +101,6 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  @keyframes marquee {
-    from {
-      transform: translateX(0);
-    }
-    to {
-      transform: translateX(calc(-100% - var(--gap)));
-    }
-  }
-  @keyframes marquee-vertical {
-    from {
-      transform: translateY(0);
-    }
-    to {
-      transform: translateY(calc(-100% - var(--gap)));
-    }
-  }
   --animate-line-shadow: line-shadow 15s linear infinite;
   @keyframes line-shadow {
     0% {
@@ -213,7 +182,6 @@
   font-weight: 400;
   font-style: normal;
 }
-
 
 button {
   cursor: pointer !important;
