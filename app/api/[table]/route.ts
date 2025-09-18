@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import {
   getAllRows,
-  getFirstRow,
   getRandomRow,
   incrementReportCount,
-  deleteAllRows
+  deleteAllRows,
+  createDailyChallenge
 } from "@/lib/supabase/supabaseHelper";
 
 export async function GET(
@@ -51,9 +51,9 @@ export async function GET(
         }
       }
 
-      case "recent": {
-        const recentRows = await getFirstRow(table);
-        return NextResponse.json({ questions: recentRows }, { status: 200 });
+      case "daily-replace": {
+        const replacementRows = await createDailyChallenge("questions", "daily_challenge", limit);
+        return NextResponse.json(replacementRows, { status: 200 });
       }
 
       default: {
@@ -138,7 +138,7 @@ export async function DELETE(
       );
     }
 
-    const secret = process.env.CLEAR_TABLE_SECRET;
+    const secret = process.env.CRON_SECRET;
     if (!secret || request.headers.get("x-clear-secret") !== secret) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
