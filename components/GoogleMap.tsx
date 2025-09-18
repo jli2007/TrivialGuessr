@@ -95,14 +95,6 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
 
       const userMarker = new google.maps.Marker(userMarkerOptions);
 
-      const userInfoWindow = new google.maps.InfoWindow({
-        content: '<div style="color: black; font-weight: bold; padding: 4px;">🔴 Your Guess</div>'
-      });
-      
-      userMarker.addListener('click', () => {
-        userInfoWindow.open(map, userMarker);
-      });
-
       markersRef.current.push(userMarker);
     }
 
