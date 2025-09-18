@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import {
   getAllRows,
-  getFirstRow,
   getRandomRow,
   incrementReportCount,
+  deleteAllRows,
+  createDailyChallenge
 } from "@/lib/supabase/supabaseHelper";
 
 export async function GET(
@@ -11,13 +12,13 @@ export async function GET(
   { params }: { params: Promise<{ table: string }> }
 ) {
   try {
-    console.log("app/api/[table]/route.ts GET called");
-
     const { table } = await params;
     const url = new URL(request.url);
     const action = url.searchParams.get("action");
     const limit = parseInt(url.searchParams.get("limit") ?? "1", 10);
     const orderBy = url.searchParams.get("orderBy");
+
+    console.log("app/api/[table]/route.ts GET called", table, action, limit, orderBy);
 
     if (!table) {
       return NextResponse.json(
@@ -50,9 +51,9 @@ export async function GET(
         }
       }
 
-      case "recent": {
-        const recentRows = await getFirstRow(table);
-        return NextResponse.json({ questions: recentRows }, { status: 200 });
+      case "daily-replace": {
+        const replacementRows = await createDailyChallenge("questions", "daily_challenge", limit);
+        return NextResponse.json(replacementRows, { status: 200 });
       }
 
       default: {
@@ -70,7 +71,6 @@ export async function GET(
   }
 }
 
-// Add PATCH method for updating report count
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ table: string }> }
@@ -115,6 +115,42 @@ export async function PATCH(
 
   } catch (error) {
     console.error("Error updating question:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ table: string }> }
+) {
+  try {
+    console.log("app/api/[table]/route.ts DELETE called");
+
+    const { table } = await params;
+
+    if (!table) {
+      return NextResponse.json(
+        { error: "Table name is required" },
+        { status: 400 }
+      );
+    }
+
+    const secret = process.env.CRON_SECRET;
+    if (!secret || request.headers.get("x-clear-secret") !== secret) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await deleteAllRows(table);
+
+    return NextResponse.json(
+      { success: true, message: `All rows deleted from ${table}` },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error deleting rows:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

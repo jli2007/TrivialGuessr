@@ -502,9 +502,9 @@ const GamePage: React.FC = () => {
     await handleDailyGameCompletion(score, leaderboardName);
   };
 
-  // Handle skipping name entry
+  // Handle skipping name entry - FIXED: Don't submit anything to leaderboard
   const handleSkipName = async () => {
-    await handleDailyGameCompletion(score, "Anonymous Player");
+    setShowNamePopup(false);
   };
 
   const handleGameEnd = (): void => {

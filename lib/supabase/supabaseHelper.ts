@@ -1,5 +1,6 @@
 import { supabaseClient } from "./supabaseClient";
 
+// gets first row of tableName (NOT USED)
 export async function getFirstRow(tableName: string) {
   const { data, error } = await supabaseClient
     .from(tableName)
@@ -16,6 +17,7 @@ export async function getFirstRow(tableName: string) {
   return data;
 }
 
+// gets all rows of tableName
 export async function getAllRows<Row, TableName extends string = string>(
   tableName: TableName,
   limit?: number,
@@ -45,6 +47,7 @@ export async function getAllRows<Row, TableName extends string = string>(
   }
 }
 
+// gets random row for tableName
 export async function getRandomRow<Row, TableName extends string = string>(
   tableName: TableName
 ): Promise<Row | null> {
@@ -76,6 +79,7 @@ export async function getRandomRow<Row, TableName extends string = string>(
   }
 }
 
+// increment report count for questionId from tableName
 export async function incrementReportCount(tableName: string, questionId: string | number) {
   try {
     // First, get the current report count
@@ -118,4 +122,39 @@ export async function incrementReportCount(tableName: string, questionId: string
     console.error(`Error incrementing report count for ${tableName}:`, error);
     throw error;
   }
+}
+
+// delete all rows from tableName
+export async function deleteAllRows(tableName: string) {
+  const { error } = await supabaseClient
+    .from(tableName)
+    .delete()
+    .neq("id", 0);
+
+  if (error) {
+    throw new Error(
+      `Error deleting rows from ${tableName}: ${error.message}`
+    );
+  }
+
+  return true;
+}
+
+// gets 5 random rows from fromTable and inserts to toTable
+export async function createDailyChallenge(fromTable: string, toTable: string, limit: number,) {
+  const { data: rows, error: fetchError } = await supabaseClient
+    .from(fromTable)
+    .select('*')
+    .order('RANDOM()')
+    .limit(limit);
+
+  if (fetchError) throw fetchError;
+
+  const { error: insertError } = await supabaseClient
+    .from(toTable)
+    .insert(rows);
+
+  if (insertError) throw insertError;
+
+  return { success: true };
 }
