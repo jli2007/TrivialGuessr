@@ -17,6 +17,8 @@ import {
   AlertTriangle,
   X,
   Info,
+  ArrowLeft,
+  Home,
 } from "lucide-react";
 
 interface GameQuestionProps {
@@ -53,6 +55,17 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
   const [hasReported, setHasReported] = useState<boolean>(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Back to home functionality
+  const handleBackToHome = () => {
+    // Clean up any timers before navigating
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    // Navigate back to home - you can use your router here
+    // For Next.js: router.push('/');
+    window.location.href = '/';
+  };
 
   const handleReportQuestion = async () => {
     if (isReporting || hasReported) return;
@@ -148,6 +161,35 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
       clearTimeout(timerRef.current);
     }
   }, [showAnswer, selectedLocation, question, onAnswerSubmitted]);
+
+  // Spacebar functionality
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Only handle spacebar if no modals are open and not typing in input fields
+      if (event.code === 'Space' && !showReportModal && !showInfoPanel && !imageExpanded) {
+        // Prevent default spacebar behavior (scrolling)
+        event.preventDefault();
+        
+        if (!showAnswer) {
+          // If game is in progress and location is selected, submit guess
+          if (selectedLocation) {
+            handleSubmitGuess();
+          }
+        } else {
+          // If answer is shown, go to next round
+          handleNextRound();
+        }
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('keydown', handleKeyPress);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [showAnswer, selectedLocation, handleSubmitGuess, onNextRound, showReportModal, showInfoPanel, imageExpanded]);
 
   // Timer effect
   useEffect(() => {
@@ -248,6 +290,17 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
         isFullscreen={true}
       />
 
+      {/* Mobile Back Button - Top Left Corner */}
+      <div className="absolute top-4 left-4 z-20 md:hidden">
+        <button
+          onClick={handleBackToHome}
+          className="bg-black/80 backdrop-blur-md text-white p-2 rounded-xl hover:bg-black/90 transition-all duration-300 border border-white/20 shadow-lg group flex items-center gap-2"
+          title="Back to Home"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:scale-110 transition-transform" />
+        </button>
+      </div>
+
       {/* Mobile Top Header Bar - Timer, Score, Report */}
       <div className="fixed top-0 left-0 right-0 z-20 bg-black/80 backdrop-blur-md border-b border-white/10 px-4 py-3 md:hidden">
         <div className="flex items-center justify-between">
@@ -347,6 +400,18 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Desktop Home Button - Below Score Card */}
+        <div className="absolute top-32 right-6 z-10">
+          <button
+            onClick={handleBackToHome}
+            className="bg-black/80 backdrop-blur-md text-white p-3 rounded-xl hover:bg-black/90 transition-all duration-300 border border-white/20 shadow-lg group flex items-center gap-2"
+            title="Back to Home"
+          >
+            <ArrowLeft className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            <Home className="w-5 h-5 group-hover:scale-110 transition-transform" />
+          </button>
         </div>
 
         {/* Report Button - Right Middle (Desktop) */}
@@ -567,7 +632,7 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
             </div>
           )}
 
-          {/* Desktop Question Card - Top Left (unchanged for desktop) */}
+          {/* Desktop Question Card - Top Left (updated positioning) */}
           <div className="hidden md:block absolute top-6 left-6 z-10 max-w-sm w-80">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/30 to-amber-400/30 rounded-2xl blur-lg" />
@@ -826,7 +891,7 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
                     className="w-full relative group"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/60 to-yellow-300/60 rounded-xl blur-sm opacity-75 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative bg-gradient-to-r from-yellow-500/65 to-yellow-400/65 text-white py-3 px-4 rounded-xl 'hover:from-yellow-400/60 hover:to-yellow-300/60 transition-all duration-300 font-bold flex items-center justify-center gap-2 shadow-lg hover:scale-105 border border-yellow-400/30">
+                    <div className="relative bg-gradient-to-r from-yellow-500/65 to-yellow-400/65 text-white py-3 px-4 rounded-xl hover:from-yellow-400/60 hover:to-yellow-300/60 transition-all duration-300 font-bold flex items-center justify-center gap-2 shadow-lg hover:scale-105 border border-yellow-400/30">
                       {currentQuestion < totalQuestions - 1 ? (
                         <>
                           Next Round
