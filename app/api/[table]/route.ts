@@ -3,6 +3,7 @@ import {
   getAllRows,
   getFirstRow,
   getRandomRow,
+  incrementReportCount,
 } from "@/lib/supabase/supabaseHelper";
 
 export async function GET(
@@ -64,6 +65,58 @@ export async function GET(
     console.error("Error fetching rows:", error);
     return NextResponse.json(
       { error: "Failed to fetch data" },
+      { status: 500 }
+    );
+  }
+}
+
+// Add PATCH method for updating report count
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ table: string }> }
+) {
+  try {
+    console.log("app/api/[table]/route.ts PATCH called");
+
+    const { table } = await params;
+    const body = await request.json();
+    const { questionId, action } = body;
+
+    if (!table) {
+      return NextResponse.json(
+        { error: "Table name is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!questionId) {
+      return NextResponse.json(
+        { error: "Question ID is required" },
+        { status: 400 }
+      );
+    }
+
+    if (action === "report") {
+      // Increment the report count for the question
+      const result = await incrementReportCount(table, questionId);
+      
+      console.log(`Question ${questionId} reported. New report count: ${result.report}`);
+      
+      return NextResponse.json({ 
+        success: true, 
+        reportCount: result.report 
+      }, { status: 200 });
+    }
+
+    return NextResponse.json(
+      { error: "Invalid action" },
+      { status: 400 }
+    );
+
+  } catch (error) {
+    console.error("Error updating question:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

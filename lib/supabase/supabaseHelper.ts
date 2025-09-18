@@ -75,3 +75,47 @@ export async function getRandomRow<Row, TableName extends string = string>(
     throw error;
   }
 }
+
+export async function incrementReportCount(tableName: string, questionId: string | number) {
+  try {
+    // First, get the current report count
+    const { data: currentData, error: fetchError } = await supabaseClient
+      .from(tableName)
+      .select('report')
+      .eq('id', questionId)
+      .single();
+
+    if (fetchError) {
+      throw new Error(`Database error: ${fetchError.message}`);
+    }
+
+    if (!currentData) {
+      throw new Error('Question not found');
+    }
+
+    // Increment the report count
+    const newReportCount = (currentData.report || 0) + 1;
+
+    // Update with the new count
+    const { data, error } = await supabaseClient
+      .from(tableName)
+      .update({ 
+        report: newReportCount 
+      })
+      .eq('id', questionId)
+      .select('report');
+
+    if (error) {
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    if (!data || data.length === 0) {
+      throw new Error('Question not found');
+    }
+
+    return data[0];
+  } catch (error) {
+    console.error(`Error incrementing report count for ${tableName}:`, error);
+    throw error;
+  }
+}
