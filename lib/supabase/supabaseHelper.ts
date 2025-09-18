@@ -119,3 +119,18 @@ export async function incrementReportCount(tableName: string, questionId: string
     throw error;
   }
 }
+
+export async function deleteAllRows(tableName: string) {
+  const { error } = await supabaseClient
+    .from(tableName)
+    .delete()
+    .neq("id", 0);
+
+  if (error) {
+    throw new Error(
+      `Error deleting rows from ${tableName}: ${error.message}`
+    );
+  }
+
+  return true;
+}

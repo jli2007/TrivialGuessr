@@ -1,2 +1,2 @@
 ## trivialguessr
-the knowledge of little value or importance in the grand picture.
+knowledge of little value or importance in the big picture.
