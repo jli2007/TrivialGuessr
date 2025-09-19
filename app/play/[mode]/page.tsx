@@ -485,27 +485,25 @@ const GamePage: React.FC = () => {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion((prev) => prev + 1);
     } else {
-      // Game is completing
       setGameComplete(true);
 
-      // Save daily game result to localStorage if it's a daily game
       if (mode === "daily") {
-        saveDailyGameResult(score, answers);
         setShowNamePopup(true);
       }
     }
   };
 
-  // Handle name submission
-  const handleNameSubmit = async () => {
-    if (!leaderboardName.trim()) return;
-    await handleDailyGameCompletion(score, leaderboardName);
-  };
+// Handle name submission
+const handleNameSubmit = async () => {
+  if (!leaderboardName.trim()) return;
+  saveDailyGameResult(score, answers);
+  await handleDailyGameCompletion(score, leaderboardName);
+};
 
-  // Handle skipping name entry - FIXED: Don't submit anything to leaderboard
-  const handleSkipName = async () => {
-    setShowNamePopup(false);
-  };
+const handleSkipName = () => {
+  saveDailyGameResult(score, answers);
+  setShowNamePopup(false);
+};
 
   const handleGameEnd = (): void => {
     // Clean up socket connection
@@ -607,29 +605,29 @@ const GamePage: React.FC = () => {
     );
   }
 
-  // Render game complete screen for daily challenge already played
-  if (mode === "daily" && hasPlayedDailyGame && dailyGameData && googleMapsLoaded) {
-    return (
-      <GameResult 
-        score={dailyGameData.score} 
-        answers={dailyGameData.answers} 
-        onPlayAgain={handleGameEnd}
-        isDailyReplay={true}
-      />
-    );
-  }
+  // Show name popup BEFORE the regular game complete screen
+if (showNamePopup && mode === "daily") {
+  return <NamePopup />;
+}
 
-  // Render game complete screen
-  if (showNamePopup && mode === "daily") {
-    return <NamePopup />;
-  }
+// Show game complete screen 
+if (gameComplete && (!showNamePopup || mode !== "daily")) {
+  return (
+    <GameResult score={score} answers={answers} onPlayAgain={handleGameEnd} />
+  );
+}
 
-  // Render game complete screen
-  if (gameComplete && (!showNamePopup || mode !== "daily")) {
-    return (
-      <GameResult score={score} answers={answers} onPlayAgain={handleGameEnd} />
-    );
-  }
+// Show daily replay screen (this condition should come after the popup check)
+if (mode === "daily" && hasPlayedDailyGame && dailyGameData && googleMapsLoaded) {
+  return (
+    <GameResult 
+      score={dailyGameData.score} 
+      answers={dailyGameData.answers} 
+      onPlayAgain={handleGameEnd}
+      isDailyReplay={true}
+    />
+  );
+}
 
   // MAIN GAME RENDERING
   if (
