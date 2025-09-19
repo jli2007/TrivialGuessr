@@ -32,6 +32,12 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'cdn.pixabay.com', 
       },
+      {
+        protocol: 'https',
+        hostname: 'gfzfokghiqsqmwfchteh.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/**',
+      },
     ],
   },
 }

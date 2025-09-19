@@ -56,6 +56,14 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const PLACEHOLDER_IMAGE = "https://gfzfokghiqsqmwfchteh.supabase.co/storage/v1/object/public/images/placeholder.png";
+
+  // Helper function to determine which image URL to use
+  const getImageUrl = (imageUrl: string | null): string | null => {
+    if (!imageUrl) return null;
+    return imageUrl.toLowerCase().includes('pixabay') ? PLACEHOLDER_IMAGE : imageUrl;
+  };
+
   // Back to home functionality
   const handleBackToHome = () => {
     // Clean up any timers before navigating
@@ -269,6 +277,8 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
     if (distance < 1) return `${Math.round(distance * 1000)}m`;
     return `${Math.round(distance)}km`;
   };
+
+  const displayImageUrl = getImageUrl(question.image_url!);
 
   return (
     <div className="h-screen relative overflow-hidden">
@@ -485,7 +495,7 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
       )}
 
       {/* Expanded Image Modal */}
-      {imageExpanded && question.image_url && (
+      {imageExpanded && displayImageUrl && (
         <div
           className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
           onClick={toggleImageExpanded}
@@ -493,7 +503,7 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
           <div className="relative max-w-5xl max-h-full">
             <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/20 to-amber-500/20 rounded-2xl blur-xl" />
             <Image
-              src={question.image_url}
+              src={displayImageUrl}
               alt={question.image_alt || question.question}
               width={1200}
               height={800}
@@ -541,10 +551,10 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
               </div>
 
               {/* Image */}
-              {question.image_url && !imageError && (
+              {displayImageUrl && !imageError && (
                 <div className="relative mb-4 rounded-xl overflow-hidden">
                   <Image
-                    src={question.image_url}
+                    src={displayImageUrl}
                     alt={question.image_alt || question.question}
                     width={400}
                     height={200}
@@ -638,11 +648,11 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
               <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/30 to-amber-400/30 rounded-2xl blur-lg" />
               <div className="relative bg-black/85 backdrop-blur-xl rounded-2xl border border-yellow-500/30 shadow-2xl overflow-hidden">
                 {/* Image Section */}
-                {question.image_url && !imageError && (
+                {displayImageUrl && !imageError && (
                   <div className="relative">
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
                     <Image
-                      src={question.image_url}
+                      src={displayImageUrl}
                       alt={question.image_alt}
                       width={320}
                       height={200}

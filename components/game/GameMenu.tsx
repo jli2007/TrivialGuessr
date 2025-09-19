@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Calendar, User, Crown, Infinity, Lock } from "lucide-react";
 import { TypingAnimation } from "@/components/magicui/typing-animation";
 import { AnimatedGradientText } from "@/components/magicui/animated-gradient-text";
@@ -21,6 +21,14 @@ const GameMenu: React.FC<GameMenuProps> = ({
   const [isDailyHovered, setIsDailyHovered] = useState(false);
   const [isCasualHovered, setIsCasualHovered] = useState(false);
   const [isMultiplayerHovered, setIsMultiplayerHovered] = useState(false);
+  
+  // Add a key that changes when component mounts to force TypingAnimation to restart
+  const [animationKey, setAnimationKey] = useState(0);
+
+  useEffect(() => {
+    // Force re-render of animations when component mounts
+    setAnimationKey(prev => prev + 1);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[url('/bg.jpg')] bg-cover bg-center flex items-center justify-center p-3 sm:p-4 relative overflow-x-hidden overflow-y-auto">
@@ -43,6 +51,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
         <div className="text-center mb-6 sm:mb-8">
           <div className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-2 drop-shadow-2xl">
             <TypingAnimation
+              key={`trivial-${animationKey}`}
               className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl bg-gradient-to-r from-accent-300 to-accent-400 bg-clip-text text-transparent inline !font-ragas font-bold"
               startOnView={true}
               delay={200}
@@ -50,6 +59,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
               Trivial
             </TypingAnimation>
             <TypingAnimation
+              key={`guessr-${animationKey}`}
               className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl bg-gradient-to-r from-accent-400 to-accent-500 bg-clip-text text-transparent inline !font-odachi px-1 sm:px-2"
               startOnView={true}
               delay={1000}
