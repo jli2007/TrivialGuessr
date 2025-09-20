@@ -1,28 +1,16 @@
 {
   "crons": [
     {
-      "path": "/api/daily_leaderboard",
-      "method": "DELETE",
-      "schedule": "0 5 * * *",
-      "headers": {
-        "authorization": "Bearer $CRON_SECRET"
-      }
+      "path": "/api/daily_leaderboard?action=delete-all&cron_secret=$CRON_SECRET",
+      "schedule": "0 5 * * *"
     },
     {
-      "path": "/api/daily_challenge", 
-      "method": "DELETE",
-      "schedule": "0 5 * * *",
-      "headers": {
-        "authorization": "Bearer $CRON_SECRET"
-      }
+      "path": "/api/daily_challenge?action=delete-all&cron_secret=$CRON_SECRET",
+      "schedule": "0 5 * * *"
     },
     {
       "path": "/api/questions?action=daily-replace&limit=5",
-      "method": "GET", 
-      "schedule": "0 5 * * *",
-      "headers": {
-        "authorization": "Bearer $CRON_SECRET"
-      }
+      "schedule": "0 5 * * *"
     }
   ]
 }

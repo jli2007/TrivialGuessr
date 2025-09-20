@@ -17,6 +17,7 @@ export async function GET(
     const action = url.searchParams.get("action");
     const limit = parseInt(url.searchParams.get("limit") ?? "1", 10);
     const orderBy = url.searchParams.get("orderBy");
+    const cronSecret = url.searchParams.get("cron_secret");
 
     console.log("app/api/[table]/route.ts GET called", table, action, limit, orderBy);
 
@@ -27,7 +28,7 @@ export async function GET(
       );
     }
 
-     switch (action) {
+    switch (action) {
       case "all": {
         const activeRows = await getAllRows(table);
         console.log( `Returning ${activeRows.length} rows`);
@@ -54,6 +55,34 @@ export async function GET(
       case "daily-replace": {
         const replacementRows = await createDailyChallenge("questions", "daily_challenge", limit);
         return NextResponse.json(replacementRows, { status: 200 });
+      }
+
+      case "delete-all": {
+        // Authentication for cron job
+        const secret = process.env.CRON_SECRET;
+        if (!secret) {
+          return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 500 });
+        }
+
+        // Check for manual calls with header
+        const headerSecret = request.headers.get("x-clear-secret");
+        
+        // Check for Vercel cron calls with Authorization header
+        const authHeader = request.headers.get("authorization");
+        const authSecret = authHeader?.replace("Bearer ", "");
+
+        // Allow either authentication method
+        if (headerSecret !== secret && authSecret !== secret && cronSecret !== secret) {
+          console.log("Unauthorized attempt - invalid secret");
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        await deleteAllRows(table);
+
+        return NextResponse.json(
+          { success: true, message: `All rows deleted from ${table}` },
+          { status: 200 }
+        );
       }
 
       default: {
@@ -115,55 +144,6 @@ export async function PATCH(
 
   } catch (error) {
     console.error("Error updating question:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ table: string }> }
-) {
-  try {
-    console.log("app/api/[table]/route.ts DELETE called");
-
-    const { table } = await params;
-
-    if (!table) {
-      return NextResponse.json(
-        { error: "Table name is required" },
-        { status: 400 }
-      );
-    }
-
-    const secret = process.env.CRON_SECRET;
-    if (!secret) {
-      return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 500 });
-    }
-
-    // Check for manual calls with header
-    const headerSecret = request.headers.get("x-clear-secret");
-    
-    // Check for Vercel cron calls with Authorization header
-    const authHeader = request.headers.get("authorization");
-    const cronSecret = authHeader?.replace("Bearer ", "");
-
-    // Allow either authentication method
-    if (headerSecret !== secret && cronSecret !== secret) {
-      console.log("Unauthorized attempt - invalid secret");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    await deleteAllRows(table);
-
-    return NextResponse.json(
-      { success: true, message: `All rows deleted from ${table}` },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Error deleting rows:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
