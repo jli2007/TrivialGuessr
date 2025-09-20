@@ -1,15 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/daily_leaderboard?action=delete-all&cron_secret=$CRON_SECRET",
-      "schedule": "0 5 * * *"
-    },
-    {
-      "path": "/api/daily_challenge?action=delete-all&cron_secret=$CRON_SECRET",
-      "schedule": "0 5 * * *"
-    },
-    {
-      "path": "/api/questions?action=daily-replace&limit=5",
+      "path": "/api/questions?action=daily-replace&limit=5&cron_secret=$CRON_SECRET",
       "schedule": "0 5 * * *"
     }
   ]

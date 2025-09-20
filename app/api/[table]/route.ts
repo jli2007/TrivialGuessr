@@ -4,7 +4,7 @@ import {
   getRandomRow,
   incrementReportCount,
   deleteAllRows,
-  createDailyChallenge
+  createDailyChallenge,
 } from "@/lib/supabase/supabaseHelper";
 
 export async function GET(
@@ -19,7 +19,13 @@ export async function GET(
     const orderBy = url.searchParams.get("orderBy");
     const cronSecret = url.searchParams.get("cron_secret");
 
-    console.log("app/api/[table]/route.ts GET called", table, action, limit, orderBy);
+    console.log(
+      "app/api/[table]/route.ts GET called",
+      table,
+      action,
+      limit,
+      orderBy
+    );
 
     if (!table) {
       return NextResponse.json(
@@ -31,12 +37,17 @@ export async function GET(
     switch (action) {
       case "all": {
         const activeRows = await getAllRows(table);
-        console.log( `Returning ${activeRows.length} rows`);
+        console.log(`Returning ${activeRows.length} rows`);
         return NextResponse.json({ questions: activeRows }, { status: 200 });
       }
 
       case "leaderboard": {
-        const leaderboardRows = await getAllRows(table, limit, orderBy || 'total_score', false);
+        const leaderboardRows = await getAllRows(
+          table,
+          limit,
+          orderBy || "total_score",
+          false
+        );
         return NextResponse.json(leaderboardRows, { status: 200 });
       }
 
@@ -53,34 +64,55 @@ export async function GET(
       }
 
       case "daily-replace": {
-        const replacementRows = await createDailyChallenge("questions", "daily_challenge", limit);
+        const replacementRows = await createDailyChallenge(
+          "questions",
+          "daily_challenge",
+          limit
+        );
         return NextResponse.json(replacementRows, { status: 200 });
       }
 
-      case "delete-all": {
-        // Authentication for cron job
+      case "daily-replace": {
         const secret = process.env.CRON_SECRET;
         if (!secret) {
-          return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 500 });
+          return NextResponse.json(
+            { error: "CRON_SECRET not configured" },
+            { status: 500 }
+          );
         }
 
-        // Check for manual calls with header
         const headerSecret = request.headers.get("x-clear-secret");
-        
-        // Check for Vercel cron calls with Authorization header
         const authHeader = request.headers.get("authorization");
         const authSecret = authHeader?.replace("Bearer ", "");
 
-        // Allow either authentication method
-        if (headerSecret !== secret && authSecret !== secret && cronSecret !== secret) {
+        if (
+          headerSecret !== secret &&
+          authSecret !== secret &&
+          cronSecret !== secret
+        ) {
           console.log("Unauthorized attempt - invalid secret");
           return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        await deleteAllRows(table);
+        // Clear previous day's data
+        await Promise.all([
+          deleteAllRows("daily_leaderboard"),
+          deleteAllRows("daily_challenge"),
+        ]);
+
+        // Create new daily challenge
+        const replacementRows = await createDailyChallenge(
+          "questions",
+          "daily_challenge",
+          limit
+        );
 
         return NextResponse.json(
-          { success: true, message: `All rows deleted from ${table}` },
+          {
+            success: true,
+            message: "Daily reset and new challenge created",
+            questions: replacementRows,
+          },
           { status: 200 }
         );
       }
@@ -128,20 +160,21 @@ export async function PATCH(
     if (action === "report") {
       // Increment the report count for the question
       const result = await incrementReportCount(table, questionId);
-      
-      console.log(`Question ${questionId} reported. New report count: ${result.report}`);
-      
-      return NextResponse.json({ 
-        success: true, 
-        reportCount: result.report 
-      }, { status: 200 });
+
+      console.log(
+        `Question ${questionId} reported. New report count: ${result.report}`
+      );
+
+      return NextResponse.json(
+        {
+          success: true,
+          reportCount: result.report,
+        },
+        { status: 200 }
+      );
     }
 
-    return NextResponse.json(
-      { error: "Invalid action" },
-      { status: 400 }
-    );
-
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
     console.error("Error updating question:", error);
     return NextResponse.json(
