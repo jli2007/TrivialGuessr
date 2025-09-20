@@ -1,0 +1,28 @@
+{
+  "crons": [
+    {
+      "path": "/api/daily_leaderboard",
+      "method": "DELETE",
+      "schedule": "0 5 * * *",
+      "headers": {
+        "authorization": "Bearer $CRON_SECRET"
+      }
+    },
+    {
+      "path": "/api/daily_challenge", 
+      "method": "DELETE",
+      "schedule": "0 5 * * *",
+      "headers": {
+        "authorization": "Bearer $CRON_SECRET"
+      }
+    },
+    {
+      "path": "/api/questions?action=daily-replace&limit=5",
+      "method": "GET", 
+      "schedule": "0 5 * * *",
+      "headers": {
+        "authorization": "Bearer $CRON_SECRET"
+      }
+    }
+  ]
+}

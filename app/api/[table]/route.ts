@@ -139,7 +139,20 @@ export async function DELETE(
     }
 
     const secret = process.env.CRON_SECRET;
-    if (!secret || request.headers.get("x-clear-secret") !== secret) {
+    if (!secret) {
+      return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 500 });
+    }
+
+    // Check for manual calls with header
+    const headerSecret = request.headers.get("x-clear-secret");
+    
+    // Check for Vercel cron calls with Authorization header
+    const authHeader = request.headers.get("authorization");
+    const cronSecret = authHeader?.replace("Bearer ", "");
+
+    // Allow either authentication method
+    if (headerSecret !== secret && cronSecret !== secret) {
+      console.log("Unauthorized attempt - invalid secret");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
