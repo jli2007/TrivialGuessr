@@ -55,7 +55,7 @@ export async function getRandomRow<Row, TableName extends string = string>(
     // Get total count of rows in the table
     const { count, error: countError } = await supabaseClient
       .from(tableName)
-      .select('*', { count: 'exact', head: true });
+      .select("*", { count: "exact", head: true });
 
     if (countError) throw new Error(countError.message);
     if (!count || count === 0) return null;
@@ -66,13 +66,12 @@ export async function getRandomRow<Row, TableName extends string = string>(
     // Get one row at the random offset position
     const { data, error } = await supabaseClient
       .from(tableName)
-      .select('*')
+      .select("*")
       .range(randomOffset, randomOffset)
       .limit(1);
 
     if (error) throw new Error(error.message);
     return data?.[0] || null;
-
   } catch (error) {
     console.error(`Error getting random row from ${tableName}:`, error);
     throw error;
@@ -80,13 +79,16 @@ export async function getRandomRow<Row, TableName extends string = string>(
 }
 
 // increment report count for questionId from tableName
-export async function incrementReportCount(tableName: string, questionId: string | number) {
+export async function incrementReportCount(
+  tableName: string,
+  questionId: string | number
+) {
   try {
     // First, get the current report count
     const { data: currentData, error: fetchError } = await supabaseClient
       .from(tableName)
-      .select('report')
-      .eq('id', questionId)
+      .select("report")
+      .eq("id", questionId)
       .single();
 
     if (fetchError) {
@@ -94,7 +96,7 @@ export async function incrementReportCount(tableName: string, questionId: string
     }
 
     if (!currentData) {
-      throw new Error('Question not found');
+      throw new Error("Question not found");
     }
 
     // Increment the report count
@@ -103,18 +105,18 @@ export async function incrementReportCount(tableName: string, questionId: string
     // Update with the new count
     const { data, error } = await supabaseClient
       .from(tableName)
-      .update({ 
-        report: newReportCount 
+      .update({
+        report: newReportCount,
       })
-      .eq('id', questionId)
-      .select('report');
+      .eq("id", questionId)
+      .select("report");
 
     if (error) {
       throw new Error(`Database error: ${error.message}`);
     }
 
     if (!data || data.length === 0) {
-      throw new Error('Question not found');
+      throw new Error("Question not found");
     }
 
     return data[0];
@@ -126,50 +128,58 @@ export async function incrementReportCount(tableName: string, questionId: string
 
 // delete all rows from tableName
 export async function deleteAllRows(tableName: string) {
-  try {
-    const { count } = await supabaseClient
-      .from(tableName)
-      .select("*", { count: "exact", head: true });
-    
-    if (count === 0) {
-      console.log(`Table ${tableName} is already empty`);
-      return true;
-    }
+  // Validate tableName to avoid SQL-injection-like issues
+  if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
+    const err = new Error("Invalid table name");
+    console.error(err);
+    return { success: false, error: err };
+  }
 
-    // Delete all rows
+  try {
+    // avoids sending "0" to a uuid column (which caused the 22P02 error).
     const { error } = await supabaseClient
       .from(tableName)
       .delete()
-      .neq("id", "00000000-0000-0000-0000-000000000000");
+      .not("id", "is", null);
 
     if (error) {
-      throw new Error(
-        `Error deleting rows from ${tableName}: ${error.message}`
-      );
+      console.error("Error deleting rows:", error);
+      return { success: false, error };
     }
 
-    console.log(`Successfully deleted all rows from ${tableName}`);
-    return true;
-    
-  } catch (error) {
-    console.error(`Failed to delete rows from ${tableName}:`, error);
-    throw error;
+    console.log(`All rows deleted from ${tableName}`);
+    return { success: true };
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    return { success: false, error: err };
   }
 }
 
 // gets 5 random rows from fromTable and inserts to toTable
-export async function createDailyChallenge(fromTable: string, toTable: string, limit: number,) {
-  const { data: rows, error: fetchError } = await supabaseClient
+export async function createDailyChallenge(
+  fromTable: string,
+  toTable: string,
+  limit: number
+) {
+  // First, get more rows than needed (to ensure randomness)
+  const { data: allRows, error: fetchError } = await supabaseClient
     .from(fromTable)
-    .select('*')
-    .order('RANDOM()')
-    .limit(limit);
+    .select("*");
 
   if (fetchError) throw fetchError;
 
+  // Shuffle the array and take the first `limit` items
+  const shuffledRows = allRows
+    ?.sort(() => 0.5 - Math.random())
+    .slice(0, limit);
+
+  if (!shuffledRows || shuffledRows.length === 0) {
+    throw new Error("No rows found to create daily challenge");
+  }
+
   const { error: insertError } = await supabaseClient
     .from(toTable)
-    .insert(rows);
+    .insert(shuffledRows);
 
   if (insertError) throw insertError;
 
