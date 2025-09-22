@@ -126,18 +126,35 @@ export async function incrementReportCount(tableName: string, questionId: string
 
 // delete all rows from tableName
 export async function deleteAllRows(tableName: string) {
-  const { error } = await supabaseClient
-    .from(tableName)
-    .delete()
-    .neq("id", 0);
+  try {
+    const { count } = await supabaseClient
+      .from(tableName)
+      .select("*", { count: "exact", head: true });
+    
+    if (count === 0) {
+      console.log(`Table ${tableName} is already empty`);
+      return true;
+    }
 
-  if (error) {
-    throw new Error(
-      `Error deleting rows from ${tableName}: ${error.message}`
-    );
+    // Delete all rows
+    const { error } = await supabaseClient
+      .from(tableName)
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000");
+
+    if (error) {
+      throw new Error(
+        `Error deleting rows from ${tableName}: ${error.message}`
+      );
+    }
+
+    console.log(`Successfully deleted all rows from ${tableName}`);
+    return true;
+    
+  } catch (error) {
+    console.error(`Failed to delete rows from ${tableName}:`, error);
+    throw error;
   }
-
-  return true;
 }
 
 // gets 5 random rows from fromTable and inserts to toTable
