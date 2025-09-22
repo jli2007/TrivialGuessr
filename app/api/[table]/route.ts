@@ -64,15 +64,6 @@ export async function GET(
       }
 
       case "daily-replace": {
-        const replacementRows = await createDailyChallenge(
-          "questions",
-          "daily_challenge",
-          limit
-        );
-        return NextResponse.json(replacementRows, { status: 200 });
-      }
-
-      case "daily-replace": {
         const secret = process.env.CRON_SECRET;
         if (!secret) {
           return NextResponse.json(

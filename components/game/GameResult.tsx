@@ -7,13 +7,14 @@ interface GameResultProps {
   score: number;
   answers: GameAnswer[];
   onPlayAgain: () => void;
-  isDailyReplay?: boolean;
+  mode?: string;
 }
 
 const GameResult: React.FC<GameResultProps> = ({
   score,
   answers,
   onPlayAgain,
+  mode,
 }) => {
   const averageDistance =
     answers.reduce((acc, ans) => acc + (ans.distance || 0), 0) / answers.length;
@@ -27,8 +28,41 @@ const GameResult: React.FC<GameResultProps> = ({
   };
 
   const getScoreRank = (
-    score: number
+    score: number,
+    mode?: string
   ): { rank: string; color: string; icon: React.ReactNode } => {
+    if (mode === "daily") {
+      if (score >= 22500)
+        return {
+          rank: "Elite Ball Knowledge",
+          color: "text-yellow-300",
+          icon: <Crown className="w-6 h-6" />,
+        };
+      if (score >= 17500)
+        return {
+          rank: "You're Him Lil Bro",
+          color: "text-purple-400",
+          icon: <Award className="w-6 h-6" />,
+        };
+      if (score >= 12500)
+        return {
+          rank: "You Aight",
+          color: "text-blue-400",
+          icon: <Trophy className="w-6 h-6" />,
+        };
+      if (score >= 7500)
+        return {
+          rank: "Lock In Bro",
+          color: "text-amber-400",
+          icon: <Star className="w-6 h-6" />,
+        };
+      return {
+        rank: "You Kinda Ahh",
+        color: "text-slate-400",
+        icon: <MapPin className="w-6 h-6" />,
+      };
+    }
+
     if (score >= 45000)
       return {
         rank: "Elite Ball Knowledge",
@@ -60,7 +94,7 @@ const GameResult: React.FC<GameResultProps> = ({
     };
   };
 
-  const scoreRank = getScoreRank(score);
+  const scoreRank = getScoreRank(score, mode);
 
   return (
     <div className="min-h-screen bg-[url('/bg.jpg')] bg-cover bg-center flex items-center justify-center p-3 sm:p-4 relative overflow-x-hidden overflow-y-auto">
@@ -70,7 +104,10 @@ const GameResult: React.FC<GameResultProps> = ({
 
       {/* Mountain silhouette */}
       <div className="absolute bottom-0 left-0 w-full">
-        <svg viewBox="0 0 1200 300" className="w-full h-16 sm:h-24 text-slate-700/20">
+        <svg
+          viewBox="0 0 1200 300"
+          className="w-full h-16 sm:h-24 text-slate-700/20"
+        >
           <path
             d="M0,300 L200,150 L400,200 L600,100 L800,180 L1000,120 L1200,200 L1200,300 Z"
             fill="currentColor"
@@ -90,7 +127,9 @@ const GameResult: React.FC<GameResultProps> = ({
                     {scoreRank.icon}
                   </div>
                 </div>
-                <h2 className={`text-lg sm:text-xl md:text-2xl font-bold ${scoreRank.color} font-odachi text-center leading-tight`}>
+                <h2
+                  className={`text-lg sm:text-xl md:text-2xl font-bold ${scoreRank.color} font-odachi text-center leading-tight`}
+                >
                   {scoreRank.rank}
                 </h2>
               </div>

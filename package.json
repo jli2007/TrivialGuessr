@@ -13,6 +13,7 @@
   "dependencies": {
     "@next/third-parties": "^15.5.3",
     "@supabase/supabase-js": "^2.57.4",
+    "bad-words": "^4.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.2",

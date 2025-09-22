@@ -10,8 +10,10 @@ import GameQuestion from "@components/game/GameQuestion";
 import GameResult from "@components/game/GameResult";
 import LoadingScreen from "@components/LoadingScreen";
 import io, { Socket } from "socket.io-client";
+import { Filter } from "bad-words";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+const filter = new Filter();
 
 const GamePage: React.FC = () => {
   const router = useRouter();
@@ -20,7 +22,10 @@ const GamePage: React.FC = () => {
   const socketRef = useRef<typeof Socket | null>(null);
 
   const [hasPlayedDailyGame, setHasPlayedDailyGame] = useState<boolean>(false);
-  const [dailyGameData, setDailyGameData] = useState<{score: number, answers: GameAnswer[]} | null>(null);
+  const [dailyGameData, setDailyGameData] = useState<{
+    score: number;
+    answers: GameAnswer[];
+  } | null>(null);
 
   // Game state
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
@@ -54,15 +59,15 @@ const GamePage: React.FC = () => {
 
   // Daily challenge localStorage functions
   const getDailyGameKey = () => {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
     return `daily_game_${today}`;
   };
 
   const checkDailyGameStatus = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const dailyKey = getDailyGameKey();
       const savedData = localStorage.getItem(dailyKey);
-      
+
       if (savedData) {
         try {
           const parsed = JSON.parse(savedData);
@@ -81,16 +86,19 @@ const GamePage: React.FC = () => {
     return false;
   };
 
-  const saveDailyGameResult = (finalScore: number, gameAnswers: GameAnswer[]) => {
-    if (typeof window !== 'undefined') {
+  const saveDailyGameResult = (
+    finalScore: number,
+    gameAnswers: GameAnswer[]
+  ) => {
+    if (typeof window !== "undefined") {
       const dailyKey = getDailyGameKey();
       const gameData = {
         score: finalScore,
         answers: gameAnswers,
         completedAt: new Date().toISOString(),
-        hasPlayed: true
+        hasPlayed: true,
       };
-      
+
       localStorage.setItem(dailyKey, JSON.stringify(gameData));
       setHasPlayedDailyGame(true);
       setDailyGameData(gameData);
@@ -432,12 +440,12 @@ const GamePage: React.FC = () => {
         <div className="text-center mb-6">
           <div className="text-4xl mb-3">🏆</div>
           <h2 className="text-2xl font-bold text-white mb-2">Game Complete</h2>
-            <p className="text-white/80">
-              Enter your name for the daily leaderboard
-            </p>
-            <p className="text-secondary-300 font-semibold mt-2">
-              Score: {score}
-            </p>
+          <p className="text-white/80">
+            Enter your name for the daily leaderboard
+          </p>
+          <p className="text-secondary-300 font-semibold mt-2">
+            Score: {score}
+          </p>
         </div>
 
         <div className="space-y-4">
@@ -445,7 +453,7 @@ const GamePage: React.FC = () => {
             type="text"
             placeholder="Enter your name"
             value={leaderboardName}
-            onChange={(e) => setLeaderboardName(e.target.value)}
+            onChange={handleLeaderboardNameChange}
             onKeyPress={(e) => e.key === "Enter" && handleNameSubmit()}
             className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-secondary-400/60 focus:outline-none focus:ring-2 focus:ring-secondary-400/20 transition-all duration-200"
             disabled={submittingScore}
@@ -481,6 +489,18 @@ const GamePage: React.FC = () => {
     </div>
   );
 
+  const handlePlayerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const cleanedName = filter.clean(e.target.value);
+    setPlayerName(cleanedName);
+  };
+
+  const handleLeaderboardNameChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const cleanedName = filter.clean(e.target.value);
+    setLeaderboardName(cleanedName);
+  };
+
   const handleNextRound = async (): Promise<void> => {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion((prev) => prev + 1);
@@ -493,17 +513,19 @@ const GamePage: React.FC = () => {
     }
   };
 
-// Handle name submission
-const handleNameSubmit = async () => {
-  if (!leaderboardName.trim()) return;
-  saveDailyGameResult(score, answers);
-  await handleDailyGameCompletion(score, leaderboardName);
-};
+  // Handle name submission
+  const handleNameSubmit = async () => {
+    if (!leaderboardName.trim()) return;
 
-const handleSkipName = () => {
-  saveDailyGameResult(score, answers);
-  setShowNamePopup(false);
-};
+    const cleanName = filter.clean(leaderboardName.trim());
+    saveDailyGameResult(score, answers);
+    await handleDailyGameCompletion(score, cleanName);
+  };
+
+  const handleSkipName = () => {
+    saveDailyGameResult(score, answers);
+    setShowNamePopup(false);
+  };
 
   const handleGameEnd = (): void => {
     // Clean up socket connection
@@ -606,28 +628,38 @@ const handleSkipName = () => {
   }
 
   // Show name popup BEFORE the regular game complete screen
-if (showNamePopup && mode === "daily") {
-  return <NamePopup />;
-}
+  if (showNamePopup && mode === "daily") {
+    return <NamePopup />;
+  }
 
-// Show game complete screen 
-if (gameComplete && (!showNamePopup || mode !== "daily")) {
-  return (
-    <GameResult score={score} answers={answers} onPlayAgain={handleGameEnd} />
-  );
-}
+  // Show game complete screen
+  if (gameComplete && (!showNamePopup || mode !== "daily")) {
+    return (
+      <GameResult
+        score={score}
+        answers={answers}
+        onPlayAgain={handleGameEnd}
+        mode={mode}
+      />
+    );
+  }
 
-// Show daily replay screen (this condition should come after the popup check)
-if (mode === "daily" && hasPlayedDailyGame && dailyGameData && googleMapsLoaded) {
-  return (
-    <GameResult 
-      score={dailyGameData.score} 
-      answers={dailyGameData.answers} 
-      onPlayAgain={handleGameEnd}
-      isDailyReplay={true}
-    />
-  );
-}
+  // Show daily replay screen
+  if (
+    mode === "daily" &&
+    hasPlayedDailyGame &&
+    dailyGameData &&
+    googleMapsLoaded
+  ) {
+    return (
+      <GameResult
+        score={dailyGameData.score}
+        answers={dailyGameData.answers}
+        onPlayAgain={handleGameEnd}
+        mode={mode}
+      />
+    );
+  }
 
   // MAIN GAME RENDERING
   if (
@@ -670,7 +702,7 @@ if (mode === "daily" && hasPlayedDailyGame && dailyGameData && googleMapsLoaded)
               type="text"
               placeholder="Enter your name"
               value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
+              onChange={handlePlayerNameChange} 
               className="w-full px-3 py-2.5 text-sm rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-secondary-400/60 focus:outline-none focus:ring-2 focus:ring-secondary-400/20 transition-all duration-200 backdrop-blur-sm"
             />
 
