@@ -140,7 +140,7 @@ export async function deleteAllRows(tableName: string) {
     const { error } = await supabaseClient
       .from(tableName)
       .delete()
-      .not("id", "is", null);
+      .gte("created_at", "2000-01-01T00:00:00.000Z");
 
     if (error) {
       console.error("Error deleting rows:", error);
@@ -161,25 +161,20 @@ export async function createDailyChallenge(
   toTable: string,
   limit: number
 ) {
-  // First, get more rows than needed (to ensure randomness)
-  const { data: allRows, error: fetchError } = await supabaseClient
-    .from(fromTable)
-    .select("*");
+
+  // Get random rows using the database function (custom)
+  const { data: randomRows, error: fetchError } = await supabaseClient
+    .rpc('get_random_questions', { row_limit: limit });
 
   if (fetchError) throw fetchError;
 
-  // Shuffle the array and take the first `limit` items
-  const shuffledRows = allRows
-    ?.sort(() => 0.5 - Math.random())
-    .slice(0, limit);
-
-  if (!shuffledRows || shuffledRows.length === 0) {
+  if (!randomRows || randomRows.length === 0) {
     throw new Error("No rows found to create daily challenge");
   }
 
   const { error: insertError } = await supabaseClient
     .from(toTable)
-    .insert(shuffledRows);
+    .insert(randomRows);
 
   if (insertError) throw insertError;
 

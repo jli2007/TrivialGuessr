@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/questions?action=daily-replace&limit=5&cron_secret=$CRON_SECRET",
+      "schedule": "0 5 * * *"
+    }
+  ]
+}
