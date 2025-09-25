@@ -1,4 +1,5 @@
 import { supabaseClient } from "./supabaseClient";
+import { supabaseAdmin } from './supabaseClient';
 
 // gets first row of tableName (NOT USED)
 export async function getFirstRow(tableName: string) {
@@ -128,7 +129,6 @@ export async function incrementReportCount(
 
 // delete all rows from tableName
 export async function deleteAllRows(tableName: string) {
-  // Validate tableName to avoid SQL-injection-like issues
   if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
     const err = new Error("Invalid table name");
     console.error(err);
@@ -136,11 +136,10 @@ export async function deleteAllRows(tableName: string) {
   }
 
   try {
-    // avoids sending "0" to a uuid column (which caused the 22P02 error).
-    const { error } = await supabaseClient
+    const { error } = await supabaseAdmin // Use admin client
       .from(tableName)
       .delete()
-      .gte("created_at", "2000-01-01T00:00:00.000Z");
+      .neq("id", "00000000-0000-0000-0000-000000000000"); // This will match all rows
 
     if (error) {
       console.error("Error deleting rows:", error);
