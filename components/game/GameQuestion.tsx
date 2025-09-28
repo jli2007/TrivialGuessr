@@ -61,7 +61,7 @@ const GameQuestion: React.FC<GameQuestionProps> = ({
   // Helper function to determine which image URL to use
   const getImageUrl = (imageUrl: string | null): string | null => {
     if (!imageUrl) return null;
-    return !imageUrl.toLowerCase().includes('bing') ? PLACEHOLDER_IMAGE : imageUrl;
+    return imageUrl.toLowerCase().includes('bing') || imageUrl.toLowerCase().includes('wikimedia') ? imageUrl : PLACEHOLDER_IMAGE ;
   };
 
   // Back to home functionality
