@@ -63,20 +63,48 @@ const GamePage: React.FC = () => {
     return `daily_game_${today}`;
   };
 
+  // SAVE PROGRESS AFTER EVERY QUESTION
+  useEffect(() => {
+    // Only save for daily mode and when game has started
+    if (mode === "daily" && gameStarted) {
+      const dailyKey = getDailyGameKey();
+      const gameData = {
+        score,
+        answers,
+        currentQuestion,
+        completedAt: gameComplete ? new Date().toISOString() : null,
+        hasPlayed: gameComplete, // Only true when fully complete
+      };
+      localStorage.setItem(dailyKey, JSON.stringify(gameData));
+    }
+  }, [score, answers, currentQuestion, gameComplete, gameStarted, mode]);
+
   const checkDailyGameStatus = () => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && mode === "daily") {
       const dailyKey = getDailyGameKey();
       const savedData = localStorage.getItem(dailyKey);
 
       if (savedData) {
         try {
           const parsed = JSON.parse(savedData);
-          setHasPlayedDailyGame(true);
-          setDailyGameData(parsed);
-          setScore(parsed.score);
-          setAnswers(parsed.answers);
-          setGameComplete(true);
-          return true;
+
+          if (parsed.hasPlayed && parsed.completedAt) {
+            // Game was completed - show results, don't allow replay
+            setHasPlayedDailyGame(true);
+            setDailyGameData(parsed);
+            setScore(parsed.score);
+            setAnswers(parsed.answers);
+            setGameComplete(true);
+            return true;
+          } else if (parsed.answers?.length > 0 || parsed.currentQuestion > 0) {
+            // Game was in progress - resume where they left off
+            console.log("Resuming daily game:", parsed);
+            setScore(parsed.score || 0);
+            setAnswers(parsed.answers || []);
+            setCurrentQuestion(parsed.currentQuestion || 0); // Remove the +1
+            setGameStarted(true);
+            return true;
+          }
         } catch (error) {
           console.error("Error parsing daily game data:", error);
           localStorage.removeItem(dailyKey);
@@ -376,6 +404,22 @@ const GamePage: React.FC = () => {
   };
 
   const startGame = (): void => {
+    // Don't reset state if we're resuming a daily game
+    if (mode === "daily") {
+      const dailyKey = getDailyGameKey();
+      const savedData = localStorage.getItem(dailyKey);
+
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.answers?.length > 0 || parsed.currentQuestion > 0) {
+          // We're resuming - don't reset, just start
+          setGameStarted(true);
+          return;
+        }
+      }
+    }
+
+    // Normal game start (fresh game)
     setCurrentQuestion(0);
     setScore(0);
     setAnswers([]);
@@ -702,7 +746,7 @@ const GamePage: React.FC = () => {
               type="text"
               placeholder="Enter your name"
               value={playerName}
-              onChange={handlePlayerNameChange} 
+              onChange={handlePlayerNameChange}
               className="w-full px-3 py-2.5 text-sm rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-secondary-400/60 focus:outline-none focus:ring-2 focus:ring-secondary-400/20 transition-all duration-200 backdrop-blur-sm"
             />
 
