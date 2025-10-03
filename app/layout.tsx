@@ -4,7 +4,40 @@ import { GoogleAnalytics } from '@next/third-parties/google';
 
 export const metadata: Metadata = {
   title: "TrivialGuessr",
-  description: "A challenge of little value or importance.",
+  description: "TrivialGuessr — A GeoGuessr📍 styled trivia💡 game.",
+  keywords: [
+    "TrivialGuessr",
+    "TrivialGuessr Game",
+    "GeoGuessr trivia",
+    "trivia game",
+    "map trivia game",
+    "online trivia challenge",
+    "quiz game",
+  ],
+
+  openGraph: {
+    title: "TrivialGuessr",
+    description: "Play TrivialGuessr, the GeoGuessr📍 inspired trivia💡 game.",
+    url: "https://trivialguessr.com",
+    siteName: "TrivialGuessr",
+    images: [
+      {
+        url: "https://trivialguessr.com/banner.png",
+        width: 1200,
+        height: 630,
+        alt: "TrivialGuessr — GeoGuessr Trivia Game",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "TrivialGuessr",
+    description: "Play TrivialGuessr, a GeoGuessr-style trivia game. Compete and learn while having fun!",
+    images: ["https://trivialguessr.com/banner.png"],
+  },
 };
 
 export default function RootLayout({

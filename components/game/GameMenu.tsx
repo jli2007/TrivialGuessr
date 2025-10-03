@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { Calendar, User, Crown, Infinity, Lock } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
 import { TypingAnimation } from "@/components/magicui/typing-animation";
 import { AnimatedGradientText } from "@/components/magicui/animated-gradient-text";
 import { LeaderboardEntry } from "@/types/leaderboard";
+import { Calendar, User, Crown, Infinity, Lock, Info } from "lucide-react";
 
 interface GameMenuProps {
   onStartDaily: () => void;
@@ -21,23 +21,39 @@ const GameMenu: React.FC<GameMenuProps> = ({
   const [isDailyHovered, setIsDailyHovered] = useState(false);
   const [isCasualHovered, setIsCasualHovered] = useState(false);
   const [isMultiplayerHovered, setIsMultiplayerHovered] = useState(false);
-  
+
   // Add a key that changes when component mounts to force TypingAnimation to restart
   const [animationKey, setAnimationKey] = useState(0);
+  const [showInfo, setShowInfo] = useState(false);
+  const infoRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     // Force re-render of animations when component mounts
-    setAnimationKey(prev => prev + 1);
+    setAnimationKey((prev) => prev + 1);
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as Node;
+      if (infoRef.current && infoRef.current.contains(target)) return;
+      if (buttonRef.current && buttonRef.current.contains(target)) return;
+      setShowInfo(false);
+    }
+    if (showInfo) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showInfo]);
+
   return (
-    <div className="min-h-screen bg-[url('/bg.jpg')] bg-cover bg-center flex items-center justify-center p-3 sm:p-4 relative overflow-x-hidden overflow-y-auto">
+    <div className="min-h-screen bg-[url('/bg.jpg')] bg-cover bg-center flex items-center justify-center p-3 sm:p-4 relative overflow-x-hidden overflow-y-auto ">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-25 pointer-events-none overflow-hidden">
         <div
           className="absolute inset-0 animate-diagonal-scroll bg-amber-100/25 opacity-25"
           style={{
-            backgroundImage: "url(/logoY.png)",
+            backgroundImage: "url(/logo.png)",
             backgroundSize: "85px 100px",
             backgroundRepeat: "repeat",
             width: "calc(100% + 85px)",
@@ -46,13 +62,44 @@ const GameMenu: React.FC<GameMenuProps> = ({
         />
       </div>
 
+      <button
+        ref={buttonRef}
+        onClick={() => setShowInfo((prev) => !prev)}
+        className="absolute top-4 right-4 bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 text-gray-900 p-3 rounded-2xl shadow-accent hover:shadow-2xl transition-all duration-300 z-20 flex items-center gap-2 opacity-80"
+      >
+        <Info className="w-5 h-5" />
+        <span className="inline font-bold text-sm md:text-md lg:text-lg !font-odachi">
+          About trivialguessr
+        </span>
+      </button>
+
+      {showInfo && (
+        <div
+          ref={infoRef}
+          className="absolute top-20 right-4 max-w-xs w-72 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 text-white text-sm shadow-2xl z-20"
+        >
+          <h4 className="font-bold text-base mb-2 !font-ragas">
+            About TrivialGuessr 💡
+          </h4>
+          <p className="text-white/80 text-xs">
+            Audio & Video questions + Multiplayer mode coming soon!
+            <br />
+            Questions could be worded weirdly, select the{" "}
+            <span className="font-semibold">best answer</span>. Report the
+            question if it&apos;s flawed!
+            <br />
+            Trivialguessr© 2025
+          </p>
+        </div>
+      )}
+
       <div className="max-w-4xl w-full relative z-10 px-4 sm:px-6 md:px-10">
         {/* Header - Mobile Optimized */}
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-2 drop-shadow-2xl">
+        <div className="text-center mb-6 sm:mb-8 ">
+          <div className="text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-2 drop-shadow-2xl">
             <TypingAnimation
               key={`trivial-${animationKey}`}
-              className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl bg-gradient-to-r from-accent-300 to-accent-400 bg-clip-text text-transparent inline !font-ragas font-bold"
+              className="text-6xl md:text-7xl lg:text-8xl bg-gradient-to-r from-accent-300 to-accent-400 bg-clip-text text-transparent inline !font-ragas font-bold"
               startOnView={true}
               delay={200}
             >
@@ -60,7 +107,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
             </TypingAnimation>
             <TypingAnimation
               key={`guessr-${animationKey}`}
-              className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl bg-gradient-to-r from-accent-400 to-accent-500 bg-clip-text text-transparent inline !font-odachi px-1 sm:px-2"
+              className="text-6xl md:text-7xl lg:text-8xl bg-gradient-to-r from-accent-400 to-accent-500 bg-clip-text text-transparent inline !font-odachi px-1 sm:px-2"
               startOnView={true}
               delay={1000}
             >
@@ -81,11 +128,15 @@ const GameMenu: React.FC<GameMenuProps> = ({
               <div className="p-1.5 bg-accent-300/20 rounded-lg">
                 <Crown className="w-4 h-4 sm:w-5 sm:h-5 text-accent-300" />
               </div>
-              <AnimatedGradientText colorFrom="#ffff55ff" colorTo="#f4fdffff" className="!font-ragas">
+              <AnimatedGradientText
+                colorFrom="#ffff55ff"
+                colorTo="#f4fdffff"
+                className="!font-ragas"
+              >
                 Daily Leaderboard
               </AnimatedGradientText>
             </h3>
-            
+
             <div className="space-y-2 max-h-40 sm:max-h-48 md:max-h-60 overflow-y-auto gaming-scrollbar">
               {dailyLeaderboard.slice(0, 50).map((player, index) => (
                 <div
@@ -118,7 +169,9 @@ const GameMenu: React.FC<GameMenuProps> = ({
               {dailyLeaderboard.length === 0 && (
                 <div className="text-center py-4 sm:py-6 text-white/60">
                   <p className="text-sm sm:text-base">No scores yet today!</p>
-                  <p className="text-xs sm:text-sm mt-1">Be the first to play</p>
+                  <p className="text-xs sm:text-sm mt-1">
+                    Be the first to play
+                  </p>
                 </div>
               )}
             </div>
@@ -201,7 +254,7 @@ const GameMenu: React.FC<GameMenuProps> = ({
                     "Multiplayer Mode"
                   )}
                 </span>
-                
+
                 {/* Lock Icon Overlay */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="bg-black/80 backdrop-blur-sm rounded-full p-2 sm:p-3">
@@ -209,16 +262,13 @@ const GameMenu: React.FC<GameMenuProps> = ({
                   </div>
                 </div>
               </button>
-              
+
               {/* Coming Soon Badge */}
               <div className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg transform rotate-12">
                 Coming Soon
               </div>
             </div>
           </div>
-
-          {/* Mobile Bottom Spacing */}
-          <div className="h-4 sm:h-6"></div>
         </div>
       </div>
 
@@ -232,30 +282,30 @@ const GameMenu: React.FC<GameMenuProps> = ({
             transform: translate(-85px, -100px);
           }
         }
-        
+
         .animate-diagonal-scroll {
           animation: diagonal-scroll 15s linear infinite;
         }
-        
+
         .gaming-scrollbar {
           scrollbar-width: thin;
           scrollbar-color: rgba(251, 191, 36, 0.4) rgba(51, 65, 85, 0.3);
         }
-        
+
         .gaming-scrollbar::-webkit-scrollbar {
           width: 6px;
         }
-        
+
         .gaming-scrollbar::-webkit-scrollbar-track {
           background: rgba(51, 65, 85, 0.3);
           border-radius: 6px;
         }
-        
+
         .gaming-scrollbar::-webkit-scrollbar-thumb {
           background: rgba(251, 191, 36, 0.4);
           border-radius: 6px;
         }
-        
+
         .gaming-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(251, 191, 36, 0.6);
         }

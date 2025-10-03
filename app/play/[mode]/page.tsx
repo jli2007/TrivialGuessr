@@ -51,6 +51,7 @@ const GamePage: React.FC = () => {
   const [roomPlayers, setRoomPlayers] = useState<Player[]>([]);
   const [roomData, setRoomData] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Dailys
   const [showNamePopup, setShowNamePopup] = useState<boolean>(false);
@@ -722,111 +723,209 @@ const GamePage: React.FC = () => {
       />
     );
   }
-
-  // Multiplayer setup screen
+  
+  // Multiplayer setup screen 
   if (mode === "multiplayer") {
     return (
-      <div className="space-y-4">
-        <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-white/10 hover:border-secondary-400/30 transition-all duration-300">
-          <h3 className="text-white text-lg font-bold flex items-center gap-2 mb-4">
-            <div className="p-1.5 bg-secondary-500/20 rounded-lg">
-              <Users className="w-5 h-5 text-secondary-300" />
-            </div>
-            Multiplayer Mode
-            {!isConnected && (
-              <span className="text-yellow-400 text-sm">(Connecting...)</span>
-            )}
-            {isConnected && (
-              <span className="text-green-400 text-sm">(Connected)</span>
-            )}
-          </h3>
+      <div className="min-h-screen bg-[url('/bg.jpg')] bg-cover bg-center flex items-center justify-center p-3 sm:p-4 relative overflow-x-hidden overflow-y-auto">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-25 pointer-events-none overflow-hidden">
+          <div
+            className="absolute inset-0 animate-diagonal-scroll bg-amber-100/25 opacity-25"
+            style={{
+              backgroundImage: "url(/logo.png)",
+              backgroundSize: "85px 100px",
+              backgroundRepeat: "repeat",
+              width: "calc(100% + 85px)",
+              height: "calc(100% + 100px)",
+            }}
+          />
+        </div>
 
-          <div className="space-y-3">
+        <div className="max-w-3xl w-full relative z-10 px-4 sm:px-6 md:px-10 space-y-6">
+          {/* Multiplayer Header */}
+          <div className="text-center mb-6">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white drop-shadow-2xl !font-ragas flex items-center justify-center gap-3">
+              <Users className="w-8 h-8 text-accent-300" />
+              Multiplayer Mode
+            </h1>
+            <p className="text-primary-200 text-sm sm:text-base mt-2">
+              {isConnected ? (
+                <span className="text-green-400 font-semibold">
+                  (Connected)
+                </span>
+              ) : (
+                <span className="text-yellow-400 font-semibold">
+                  (Connecting...)
+                </span>
+              )}
+            </p>
+          </div>
+
+          {/* Input Card */}
+          <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-5 shadow-2xl border border-white/10 space-y-4">
             <input
               type="text"
               placeholder="Enter your name"
               value={playerName}
-              onChange={handlePlayerNameChange}
-              className="w-full px-3 py-2.5 text-sm rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-secondary-400/60 focus:outline-none focus:ring-2 focus:ring-secondary-400/20 transition-all duration-200 backdrop-blur-sm"
+              onChange={(e) => {
+                handlePlayerNameChange(e);
+              }}
+              disabled={!!roomData}
+              className={`w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:outline-none focus:ring-2 focus:ring-accent-400/30 transition-all duration-200`}
             />
-
             <div className="flex gap-2">
               <input
                 type="text"
                 placeholder="Room Code"
                 value={roomCode}
                 onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                className="flex-1 px-3 py-2.5 text-sm rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-primary-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 transition-all duration-200 backdrop-blur-sm"
+                disabled={!!roomData}
+                className="flex-1 px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/50 border border-white/20 focus:border-accent-400/60 focus:outline-none focus:ring-2 focus:ring-accent-400/30 transition-all duration-200"
               />
               <button
-                onClick={handleJoinRoom}
-                disabled={
-                  !playerName.trim() || !roomCode.trim() || !isConnected
-                }
-                className="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-primary hover:shadow-lg hover:scale-105 flex items-center gap-1 text-sm"
+                onClick={() => {
+                  if (!playerName.trim()) {
+                    return;
+                  }
+                  handleJoinRoom();
+                }}
+                disabled={!roomCode.trim() || !isConnected || !!roomData}
+                className="px-4 py-3 bg-gradient-to-r from-accent-300 to-accent-400 hover:from-accent-400 hover:to-accent-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-gray-900 rounded-xl transition-all duration-200 font-bold shadow-accent hover:shadow-2xl active:scale-95 flex items-center gap-2"
               >
-                <Play className="w-3 h-3" />
+                <Play className="w-4 h-4" />
                 Join
               </button>
             </div>
 
             <button
-              onClick={handleCreateRoom}
-              disabled={!playerName.trim() || !isConnected}
-              className="w-full py-3 bg-secondary-500 hover:bg-secondary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-secondary hover:shadow-lg hover:scale-105 flex items-center justify-center gap-2 text-sm"
+              onClick={() => {
+                handleCreateRoom();
+              }}
+              disabled={!playerName.trim() || !isConnected || !!roomData} 
+              className="w-full py-3 bg-gradient-to-r from-secondary-400 to-secondary-500 hover:from-secondary-500 hover:to-secondary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-bold shadow-secondary hover:shadow-2xl active:scale-95 flex items-center justify-center gap-2"
             >
               <UserPlus className="w-4 h-4" />
               Create Room
             </button>
 
+            {/* Settings button only for host */}
+            {roomData && isHost && (
+              <button
+                onClick={() => setShowSettings(true)}
+                className="w-full py-3 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white rounded-xl transition-all duration-200 font-bold shadow-lg hover:shadow-2xl active:scale-95 flex items-center justify-center gap-2"
+              >
+                ⚙️ Settings
+              </button>
+            )}
+
             {roomData && isHost && (
               <button
                 onClick={startMultiplayerGame}
-                className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-all duration-200 font-semibold shadow-lg hover:scale-105 flex items-center justify-center gap-2 text-sm"
+                className="w-full py-3 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white rounded-xl transition-all duration-200 font-bold shadow-lg hover:shadow-2xl active:scale-95 flex items-center justify-center gap-2"
               >
                 <Play className="w-4 h-4" />
                 Start Game
               </button>
             )}
           </div>
+
+          {/* Room Info */}
+          {roomData && (
+            <div className="bg-black/20 backdrop-blur-xl rounded-2xl p-5 border border-white/10 shadow-2xl space-y-3">
+              <h4 className="text-white font-bold flex items-center gap-2">
+                <Users className="w-5 h-5 text-accent-300" />
+                Room {roomCode} ({roomPlayers.length} player
+                {roomPlayers.length !== 1 ? "s" : ""})
+              </h4>
+              <div className="space-y-2 max-h-48 overflow-y-auto gaming-scrollbar">
+                {roomPlayers.map((player: any, index: number) => (
+                  <div
+                    key={`${player.id}-${index}`}
+                    className="flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors duration-200 rounded-lg p-2"
+                  >
+                    <span className="text-white/90 flex items-center gap-2">
+                      {player.name}
+                      {player.isHost && (
+                        <span className="text-yellow-400">👑</span>
+                      )}
+                      {player.name === playerName && (
+                        <span className="text-blue-400">(You)</span>
+                      )}
+                    </span>
+                    <span className="text-white/70 text-sm">
+                      Score: {player.score}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {roomPlayers.length > 1 && !isHost && (
+                <p className="text-center text-white/60 text-sm mt-3">
+                  Waiting for host to start the game...
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
-        {roomData && (
-          <div className="bg-black/10 backdrop-blur-xl rounded-2xl p-4 border border-white/10">
-            <h4 className="text-white font-bold mb-2 flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Room {roomCode} ({roomPlayers.length} player
-              {roomPlayers.length !== 1 ? "s" : ""})
-            </h4>
-            <div className="space-y-2">
-              {roomPlayers.map((player: any) => (
-                <div
-                  key={player.id}
-                  className="flex items-center justify-between bg-white/5 rounded-lg p-2"
-                >
-                  <span className="text-white/90 flex items-center gap-2">
-                    {player.name}
-                    {player.isHost && (
-                      <span className="text-yellow-400">👑</span>
-                    )}
-                    {player.name === playerName && (
-                      <span className="text-blue-400">(You)</span>
-                    )}
-                  </span>
-                  <span className="text-white/70 text-sm">
-                    Score: {player.score}
-                  </span>
+        {/* Settings Modal (UI only) */}
+        {showSettings && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-gray-800 rounded-2xl p-6 max-w-md w-full shadow-2xl text-white">
+              <h2 className="text-xl font-bold mb-4">Game Settings</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span>Question Limit</span>
+                  <span className="text-gray-400">Coming soon...</span>
                 </div>
-              ))}
-            </div>
-
-            {roomPlayers.length > 1 && !isHost && (
-              <div className="mt-3 text-center text-white/60 text-sm">
-                Waiting for host to start the game...
+                <div className="flex justify-between">
+                  <span>Difficulty</span>
+                  <span className="text-gray-400">Coming soon...</span>
+                </div>
               </div>
-            )}
+              <button
+                onClick={() => setShowSettings(false)}
+                className="mt-6 w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold"
+              >
+                Close
+              </button>
+            </div>
           </div>
         )}
+
+        {/* Reuse animations + scrollbar */}
+        <style jsx>{`
+          @keyframes diagonal-scroll {
+            0% {
+              transform: translate(0, 0);
+            }
+            100% {
+              transform: translate(-85px, -100px);
+            }
+          }
+          .animate-diagonal-scroll {
+            animation: diagonal-scroll 15s linear infinite;
+          }
+          .gaming-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(251, 191, 36, 0.4) rgba(51, 65, 85, 0.3);
+          }
+          .gaming-scrollbar::-webkit-scrollbar {
+            width: 6px;
+          }
+          .gaming-scrollbar::-webkit-scrollbar-track {
+            background: rgba(51, 65, 85, 0.3);
+            border-radius: 6px;
+          }
+          .gaming-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(251, 191, 36, 0.4);
+            border-radius: 6px;
+          }
+          .gaming-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(251, 191, 36, 0.6);
+          }
+        `}</style>
       </div>
     );
   }
