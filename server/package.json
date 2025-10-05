@@ -1,0 +1,29 @@
+{
+  "name": "trivialguessr-server",
+  "version": "1.0.0",
+  "description": "Socket.IO game server with room and player management",
+  "main": "index.ts",
+  "scripts": {
+    "start": "tsx index.ts",
+    "dev": "tsx watch index.ts",
+    "build": "tsc",
+    "serve": "node dist/index.js"
+  },
+  "dependencies": {
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@types/socket.io": "^3.0.2",
+    "tsx": "^4.7.1",
+    "typescript": "^5.4.5"
+  },
+  "keywords": [
+    "socket.io",
+    "game",
+    "multiplayer",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT"
+}
