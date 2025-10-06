@@ -1,5 +1,4 @@
 import { supabaseClient } from "./supabaseClient";
-import { supabaseAdmin } from './supabaseClient';
 
 // gets first row of tableName (NOT USED)
 export async function getFirstRow(tableName: string) {
@@ -127,23 +126,27 @@ export async function incrementReportCount(
   }
 }
 
-// delete all rows from tableName
+// delete all rows from tableName: CALL SERVER TO USE SERVICE ROLE KEY
 export async function deleteAllRows(tableName: string) {
-  if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
-    const err = new Error("Invalid table name");
-    console.error(err);
-    return { success: false, error: err };
-  }
-
   try {
-    const { error } = await supabaseAdmin // Use admin client
-      .from(tableName)
-      .delete()
-      .neq("id", "00000000-0000-0000-0000-000000000000"); // This will match all rows
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+    const res = await fetch(`${baseUrl}/api/delete-table`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ tableName }),
+    });
 
-    if (error) {
-      console.error("Error deleting rows:", error);
-      return { success: false, error };
+    if (!res.ok) {
+      throw new Error("Failed to fetch");
+    }
+
+    const { data } = await res.json();
+
+    if (data.error) {
+      console.error("Error deleting rows:", data.error);
+      return { success: false, error: data.error };
     }
 
     console.log(`All rows deleted from ${tableName}`);
@@ -160,10 +163,11 @@ export async function createDailyChallenge(
   toTable: string,
   limit: number
 ) {
-
   // Get random rows using the database function (custom)
-  const { data: randomRows, error: fetchError } = await supabaseClient
-    .rpc('get_random_questions', { row_limit: limit });
+  const { data: randomRows, error: fetchError } = await supabaseClient.rpc(
+    "get_random_questions",
+    { row_limit: limit }
+  );
 
   if (fetchError) throw fetchError;
 

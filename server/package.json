@@ -10,11 +10,15 @@
     "serve": "node dist/index.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
+    "dotenv": "^17.2.3",
     "socket.io": "^4.7.5"
   },
   "devDependencies": {
+    "@types/express": "^5.0.3",
     "@types/node": "^20.11.30",
     "@types/socket.io": "^3.0.2",
+    "express": "^5.1.0",
     "tsx": "^4.7.1",
     "typescript": "^5.4.5"
   },
