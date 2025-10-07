@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import { Server, Socket } from "socket.io";
 import { createServer } from "http";
 import { supabaseAdmin } from "./supabase/admin";
-import { Player, Room } from "./types/multiplayer";
+import { Room } from "./types/multiplayer";
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -34,7 +34,7 @@ app.post("/api/delete-table", async (req: Request, res: Response) => {
     if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
       const err = new Error("Invalid table name");
       console.error(err);
-      return { success: false, error: err };
+      return res.json({ success: false, error: "Invalid table name" });
     }
 
     try {
@@ -45,14 +45,14 @@ app.post("/api/delete-table", async (req: Request, res: Response) => {
 
       if (error) {
         console.error("Error deleting rows:", error);
-        return { success: false, error: error };
+        return res.json({ success: false, error }); 
       }
 
       console.log(`All rows deleted from ${tableName}`);
-      return { success: true };
-    } catch (err) {
+      return res.json({ success: true }); 
+    } catch (err: any) {
       console.error("Unexpected error:", err);
-      return { success: false, error: err };
+      return res.status(500).json({ success: false, error: err.message });
     }
   } catch (e) {
     res.status(500).json({ error: "internal error" });
