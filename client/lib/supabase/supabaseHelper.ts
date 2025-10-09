@@ -139,23 +139,24 @@ export async function deleteAllRows(tableName: string) {
     });
 
     if (!res.ok) {
-      throw new Error("Failed to fetch");
+      const text = await res.text();
+      throw new Error(`Request failed with status ${res.status}: ${text}`);
     }
 
-    const { data } = await res.json();
-
-    if (data.error) {
-      console.error("Error deleting rows:", data.error);
-      return { success: false, error: data.error };
+    const json = await res.json();
+    if (!json.success) {
+      console.error("Error deleting rows:", json.error ?? json);
+      return { success: false, error: json.error ?? json };
     }
 
     console.log(`All rows deleted from ${tableName}`);
     return { success: true };
   } catch (err) {
     console.error("Unexpected error:", err);
-    return { success: false, error: err };
+    return { success: false, error: err instanceof Error ? err.message : err };
   }
 }
+
 
 // gets 5 random rows from fromTable and inserts to toTable
 export async function createDailyChallenge(
