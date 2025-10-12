@@ -129,7 +129,7 @@ export async function incrementReportCount(
 // delete all rows from tableName: CALL SERVER TO USE SERVICE ROLE KEY
 export async function deleteAllRows(tableName: string) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL;
     const res = await fetch(`${baseUrl}/api/delete-table`, {
       method: "POST",
       headers: {

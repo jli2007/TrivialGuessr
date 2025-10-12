@@ -361,7 +361,7 @@ const GamePage: React.FC = () => {
       }
 
       if (!Array.isArray(questions) || questions.length === 0) {
-        throw new Error("No questions received from server");
+        throw new Error("Questions are not available right now. Check back later.");
       }
 
       return questions;

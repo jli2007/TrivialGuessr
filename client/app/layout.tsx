@@ -1,23 +1,31 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { GoogleAnalytics } from '@next/third-parties/google';
+import { GoogleAnalytics } from "@next/third-parties/google";
+
+export const metadataBase = new URL("https://trivialguessr.com");
 
 export const metadata: Metadata = {
   title: "TrivialGuessr",
   description: "TrivialGuessr — A GeoGuessr📍 styled trivia💡 game.",
   keywords: [
     "TrivialGuessr",
-    "TrivialGuessr Game",
+    "TrivialGuesser",
+    "Trivia Guessr",
+    "Trivia Guesser",
+    "Trivial Guessr",
+    "Trivial Guesser",
     "GeoGuessr trivia",
-    "trivia game",
     "map trivia game",
-    "online trivia challenge",
     "quiz game",
+    "online trivia challenge",
   ],
-
+  alternates: {
+    canonical: "https://trivialguessr.com",
+  },
   openGraph: {
     title: "TrivialGuessr",
-    description: "Play TrivialGuessr, the GeoGuessr📍 inspired trivia💡 game.",
+    description:
+      "Play TrivialGuessr, the GeoGuessr📍 inspired trivia💡 game.",
     url: "https://trivialguessr.com",
     siteName: "TrivialGuessr",
     images: [
@@ -31,26 +39,31 @@ export const metadata: Metadata = {
     locale: "en_US",
     type: "website",
   },
-
   twitter: {
     card: "summary_large_image",
     title: "TrivialGuessr",
-    description: "Play TrivialGuessr, a GeoGuessr-style trivia game. Compete and learn while having fun!",
+    description:
+      "Play TrivialGuessr, the GeoGuessr📍 inspired trivia💡 game.",
     images: ["https://trivialguessr.com/banner.png"],
+    creator: "@_jamesli",
   },
+  icons: {
+    icon: "/marker.svg",
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      <link rel="icon" href="/marker.svg" />
-      <body
-        className={`antialiased font-quicksand`}
-      >
+      <head>
+        <meta name="twitter:url" content="https://trivialguessr.com" />
+      </head>
+      <body className="antialiased font-quicksand">
         {children}
         <GoogleAnalytics gaId="G-968C85GP1X" />
       </body>
