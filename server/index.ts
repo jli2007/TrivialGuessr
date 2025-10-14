@@ -18,7 +18,7 @@ const io = new Server(httpServer, {
   },
 });
 
-const port = 8000;
+const port = process.env.PORT || 8000;
 httpServer.listen(port, () => {
   console.log(`Server (Express + Socket.IO) listening on port ${port}`);
 });
@@ -29,6 +29,7 @@ app.get("/api/health", (req: Request, res: Response) => {
 
 app.post("/api/delete-table", async (req: Request, res: Response) => {
   try {
+    console.log("TRYING TO DELETE TABLE")
     const { tableName } = req.body;
 
     if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
